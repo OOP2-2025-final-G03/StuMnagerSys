@@ -1,0 +1,223 @@
+:root {
+    /* ダッシュボード固有のレイアウト変数 */
+    --sidebar-w-collapsed: 88px;  /* 折りたたみ時のサイドバー幅 */
+    --sidebar-w-expanded: 280px;  /* 展開時のサイドバー幅 */
+}
+
+body {
+    width: 100vw;
+    display: flex; /* サイドバーとメインコンテンツを横並びにする */
+    overflow: hidden; /* スクロールはmain-content内で行うため、body自体のスクロールは無効化 */
+    /* 背景色とフォント設定は theme.css で処理済み */
+}
+
+/* =========================================
+   Sidebar Structure (サイドバー/アサイド)
+   ========================================= */
+.sidebar {
+    height: 100vh; /* 画面の高さいっぱいに */
+    width: var(--sidebar-w-collapsed); /* 初期状態は狭い幅 */
+    background-color: var(--card-bg);
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column; /* 内部要素を縦並びに */
+    padding: 32px 16px;
+    box-sizing: border-box;
+    transition: width var(--anim-slow); /* 幅の変更をアニメーション（slow）させる */
+    position: relative;
+    z-index: 50; /* メインコンテンツより手前に表示 */
+    box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+}
+
+/* ホバー時にサイドバーを展開するトリガー */
+.sidebar:hover {
+    width: var(--sidebar-w-expanded); /* 幅を広げる */
+    box-shadow: 12px 0 32px rgba(0,0,0,0.08);
+}
+
+/* --- User Profile Section (上部：ユーザー情報) --- */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+    padding: 8px;
+    border-radius: 12px;
+    overflow: hidden; /* はみ出した文字を隠す */
+    white-space: nowrap; /* テキストの折り返しを禁止 */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sidebar:hover .user-profile:hover {
+    background-color: var(--hover-bg);
+}
+
+/* アバター（アイコン） */
+.avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--text-main);
+    color: var(--card-bg);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    flex-shrink: 0; /* 幅が縮まないように固定 */
+}
+
+/* ユーザー名とロール情報 */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    opacity: 0; /* 初期状態は非表示（透明） */
+    transform: translateX(-10px); /* 左にずらしておく */
+    transition: all var(--anim-medium);
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.user-role {
+    font-size: 12px;
+    color: var(--text-sub);
+}
+
+/* --- Navigation Links (中部：メニュー) --- */
+.nav-menu {
+    flex: 1; /* 余白を埋めるように伸縮 */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 12px; 
+    border-radius: 12px;
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: all 0.2s var(--anim-curve);
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+}
+
+/* アイコンコンテナ */
+.nav-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px; 
+}
+
+.nav-icon svg {
+    stroke-width: 2px;
+    transition: stroke 0.2s;
+}
+
+/* メニューのテキストラベル */
+.nav-text {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0; /* 初期状態は非表示 */
+    transform: translateX(-10px);
+    transition: all var(--anim-medium);
+}
+
+/* 交互状態：Sidebarをホバーした時にテキストと情報を表示 */
+.sidebar:hover .user-info,
+.sidebar:hover .nav-text {
+    opacity: 1;
+    transform: translateX(0); /* 元の位置に戻る */
+    transition-delay: 0.1s; /* サイドバーが開き始めてから少し遅れて表示 */
+}
+
+/* 交互状態：メニュー項目のホバー */
+.nav-item:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-main);
+}
+
+/* 交互状態：Active (現在選択中のページ) */
+.nav-item.active {
+    background-color: var(--active-bg);
+    color: var(--active-text);
+    box-shadow: var(--shadow-md);
+}
+
+.nav-item.active svg {
+    stroke: var(--active-text);
+}
+
+/* --- Footer Actions (下部：ログアウト等) --- */
+.sidebar-footer {
+    margin-top: auto; /* 最下部に押し下げる */
+    border-top: 1px solid var(--border-light);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* =========================================
+   Main Content Area (メインコンテンツ)
+   ========================================= */
+.main-content {
+    flex: 1; /* 残りのスペースを全て使用 */
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    overflow-y: auto; /* コンテンツが溢れた場合のみスクロールバーを表示 */
+    transition: margin-left var(--anim-slow);
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.content-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.date-badge {
+    padding: 8px 16px;
+    background: #FFFFFF;
+    border-radius: 20px;
+    color: var(--text-sub);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.dashboard-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--card-bg);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: var(--shadow-lg);
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-sub);
+    border: 1px solid var(--border-light);
+}

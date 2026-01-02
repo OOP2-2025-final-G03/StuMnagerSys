@@ -1,0 +1,42 @@
+{% extends "dashboard/dash_base.html" %}
+
+{% block title %}Dashboard | 学生管理システム{% endblock %}
+
+{% block nav_items %}
+    <a href="/auth/me" class="nav-item {{ 'active' if active_page == 'account' else '' }}">
+        <div class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="7" r="4"/>
+                <path d="M4 21V17C4 15.8954 4.89543 15 6 15H18C19.1046 15 20 15.8954 20 17V21" />
+            </svg>
+        </div>
+        <span class="nav-text">アカウント</span>
+    </a>
+
+    <a href="/users/students" class="nav-item {{ 'active' if active_page == 'students' else '' }}">
+        <div class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <span class="nav-text">学生管理</span>
+    </a>
+
+    <a href="/subjects" class="nav-item {{ 'active' if active_page == 'subjects' else '' }}">
+        <div class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </div>
+        <span class="nav-text">科目管理</span>
+    </a>
+
+    <a href="/grades" class="nav-item {{ 'active' if active_page == 'grades' else '' }}">
+        <div class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        </div>
+        <span class="nav-text">成績管理</span>
+    </a>
+{% endblock %}
+{% block dashboard_content %}
+    <div class="dashboard-card">
+        <h2>教員用ダッシュボードへようこそ</h2>
+        <p>ここでは担当している科目や学生の成績を管理できます。</p>
+    </div>
+{% endblock %}

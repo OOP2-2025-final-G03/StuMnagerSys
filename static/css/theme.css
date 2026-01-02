@@ -1,0 +1,207 @@
+/* static/css/theme.css */
+
+/* テーマ設定用CSS
+ * ダークモードとライトモードの共通スタイル
+ */
+
+/* =========================================
+   Light Theme Defaults (ライトモード: デフォルト設定)
+   ========================================= */
+:root {
+    /* --- 色設定 (カラーパレット) --- */
+    --page-bg: #F2F4F7;         /* ページ全体の背景色（薄いグレー） */
+    --card-bg: #FFFFFF;         /* コンテンツカードの背景色（白） */
+    --primary-color: #1A1A1A;   /* ブランドカラー/主要ボタンの背景色（ほぼ黒） */
+    --primary-hover: #000000;   /* ボタンホバー時の色（完全な黒） */
+    
+    /* --- テキストカラー (Typography Colors) --- */
+    --text-main: #1A1A1A;       /* 見出し・本文の主要テキスト色 */
+    --text-sub: #667085;        /* 補足情報・ラベル用のサブテキスト色 */
+    --text-placeholder: #98A2B3; /* プレースホルダー（入力例）の文字色 */
+    
+    /* --- フォームと境界線 (Forms & Borders) --- */
+    --input-bg: #FAFAFA;        /* 入力フィールドの背景色 */
+    --input-border: #D0D5DD;    /* 入力フィールドの枠線色 */
+    --border-light: rgba(0,0,0,0.04); /* 区切り線用の非常に薄いボーダー */
+    
+    /* --- インタラクション状態 (State) --- */
+    --hover-bg: #F9FAFB;        /* リストやサイドバー項目のホバー背景 */
+    --active-bg: #1A1A1A;       /* 選択中アイテムの背景色 */
+    --active-text: #FFFFFF;     /* 選択中アイテムの文字色（背景が暗いため白） */
+    
+    /* --- 動効物理 (Animation Physics) --- */
+    /* ベジェ曲線: 動き始めと終わりを滑らかにする（イージング）設定 */
+    --anim-curve: cubic-bezier(0.4, 0, 0.2, 1); 
+    --anim-fast: 0.2s var(--anim-curve);   /* ボタンクリックなどの速い動作 */
+    --anim-medium: 0.3s var(--anim-curve); /* フェードインなどの中間の動作 */
+    --anim-slow: 0.4s var(--anim-curve);   /* サイドバー開閉などの大きな動作 */
+
+    /* --- 深度と影 (Depth & Shadows) --- */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04); /* 小さな影（ボタンなど） */
+    --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.15); /* 中くらいの影（アクティブ要素） */
+    /* 大きな影（カード、モーダル用）：2つの影を重ねてリッチな質感を出す */
+    --shadow-lg: 0 20px 48px -12px rgba(16, 24, 40, 0.1), 0 8px 16px -4px rgba(16, 24, 40, 0.04);
+    --focus-shadow: 0 0 0 4px rgba(26, 26, 26, 0.1); /* 入力フォーカス時の光彩 */
+}
+
+/* 全局基礎重置 (Global Reset) */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--page-bg); /* 変数を使用して背景色を適用 */
+    color: var(--text-main);          /* 変数を使用して文字色を適用 */
+    /* システムフォントを優先使用（Mac, Windows, iOS, Android対応） */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased; /* フォントのアンチエイリアス有効化 */
+}
+
+/* =========================================
+   Dark Theme Overrides (ダークモードの上書き設定)
+   ========================================= */
+/* HTMLタグに data-theme="dark" が付与された場合に適用 */
+[data-theme="dark"] {
+    /* --- コアカラーの反転 --- */
+    --page-bg: #0F1115;          /* 真っ黒ではなく、目に優しい濃いダークグレー */
+    --card-bg: #181B21;          /* カード背景（背景より少し明るいグレー） */
+    
+    /* --- ボタン反転：黒底白字 -> 白底黒字 --- */
+    --primary-color: #c2c2c2;    /* 暗い背景で視認性の良い明るいグレー */
+    --primary-hover: #c0c0c0;
+    
+    /* --- テキスト反転 --- */
+    --text-main: #FFFFFF;        /* 白文字 */
+    --text-sub: #98A2B3;         /* やや暗い白（グレー） */
+    --text-placeholder: #667085;
+    
+    /* --- フォームと境界線 --- */
+    --input-bg: #22262E;
+    --input-border: #344054;
+    --border-light: rgba(255,255,255,0.08); /* ボーダーを白の半透明に変更 */
+    
+    /* --- インタラクション状態 --- */
+    --hover-bg: #22262E;
+    --active-bg: #FFFFFF;
+    --active-text: #0F1115;      /* 選択時は白背景に黒文字 */
+    
+    /* --- 影の調整 --- */
+    /* ダークモードでは黒い影が見えにくいため、白っぽい光彩や濃い影で調整 */
+    --shadow-sm: 0 2px 8px rgba(165, 165, 165, 0.4);
+    --shadow-md: 0 4px 12px rgba(211, 211, 211, 0.5);
+    --shadow-lg: 0 20px 48px -12px rgba(255, 255, 255, 0.6);
+}
+
+/* テーマ切り替え時のグローバルなトランジション
+   背景色、文字色、枠線、影が変化する際に「じわっ」とアニメーションさせる */
+body, .sidebar, .login-card, .choose-user-card, .input-field, .btn, .submit-btn, .dashboard-card {
+    transition: background-color 0.3s var(--anim-curve), 
+                color 0.3s var(--anim-curve), 
+                border-color 0.3s var(--anim-curve), 
+                box-shadow 0.3s var(--anim-curve);
+}
+
+/* static/css/toggle.css */
+/* テーマ切り替えスイッチのスタイル定義 */
+
+.theme-switch-wrapper {
+    position: fixed; /* 画面右下に固定配置 */
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000; /* 他の要素より手前に表示 */
+    display: flex;
+    align-items: center;
+}
+
+.theme-switch {
+    display: inline-block;
+    height: 34px;
+    position: relative;
+    width: 60px;
+}
+
+.theme-switch input {
+    display: none; /* デフォルトのチェックボックス要素は非表示 */
+}
+
+/* スライダーの軌道 (Track) */
+.slider {
+    background-color: #E4E7EC; /* ライトモード時の軌道色 */
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: .4s;
+    border-radius: 34px;
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* スライダーのつまみ (Knob) */
+.slider:before {
+    background-color: #fff;
+    bottom: 4px;
+    content: "";
+    height: 26px;
+    left: 4px;
+    position: absolute;
+    transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 26px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
+/* アイコン層 (太陽と月) */
+.icon-sun, .icon-moon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%); /* 垂直方向中央配置 */
+    width: 16px;
+    height: 16px;
+    transition: opacity 0.3s;
+}
+
+.icon-sun {
+    left: 9px;
+    stroke: #ffffff; /* 太陽の色（白） */
+    z-index: 1;
+}
+
+.icon-moon {
+    right: 9px;
+    stroke: #98A2B3; /* 月の色（グレー） */
+    z-index: 1;
+}
+
+/* Check box 選択状態 (Dark Mode ON) */
+input:checked + .slider {
+    background-color: #22262E; /* ダークモード時の軌道色 */
+    border-color: rgba(255,255,255,0.1);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px); /* つまみを右へ移動 */
+    background-color: #1A1A1A; /* ダークモード時、つまみを暗くする */
+}
+
+/* ダークモード時、月のアイコンを目立たせる */
+input:checked + .slider .icon-moon {
+    stroke: #fff;
+}
+
+/* フェードインアップアニメーション */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 共通のフェードインアップアニメーションクラス */
+.animate-fade-in {
+    animation: fadeInUp var(--anim-medium) ease-out forwards;
+}

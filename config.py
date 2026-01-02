@@ -29,3 +29,10 @@ class Config:
     SESSION_PERMANENT = False # セッションが期限切れになった後でも保持するかどうか
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=60) # セッションの有効期限（分）
 
+    # ユーザーロールと表示名のマッピング
+    ROLE_TITLES = {
+        'student': '学生',
+        'teacher': '教師',
+        'admin': '管理者'
+    }
+

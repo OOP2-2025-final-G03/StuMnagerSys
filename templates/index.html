@@ -1,11 +1,34 @@
-<!DOCTYPE html>
-<html lang="jp">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Management System</title>
-</head>
-<body>
-    <h1>Student Management System</h1>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}学生管理システム | 入口{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <header class="header">
+        <h1>学生管理システム</h1>
+        <p>ようこそ</p>
+    </header>
+    <main class="choose-user-card">
+        <h2>ユーザー種類を選択してください</h2>
+        <button class="btn" data-user-type="student">学生</button>
+        <button class="btn" data-user-type="teacher">教師</button>
+        <button class="btn" data-user-type="admin">管理者</button>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.btn[data-user-type]').forEach(button => {
+        button.addEventListener('click', function() {
+            const userType = this.getAttribute('data-user-type');
+            // 这里的路由逻辑请根据你的 Flask 路由进行调整
+            window.location.href = `/login/${userType}`;
+        });
+    });
+</script>
+{% endblock %}

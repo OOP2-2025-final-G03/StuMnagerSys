@@ -1,0 +1,198 @@
+/* ページ全体のレイアウト（index.cssと同様に中央揃え） */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    margin-top: -40px; 
+}
+
+/* ヘッダーセクション */
+.header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+}
+
+.header p {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin: 0;
+}
+
+/* ログインフォームのカードコンテナ */
+.login-card {
+    background-color: var(--card-bg);
+    padding: 40px 32px;
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg); /* 統一された影変数を使用 */
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+/* アイコン付き入力欄のためのラッパー */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* 入力フィールド本体 */
+.input-field {
+    width: 100%;
+    padding: 14px 16px;
+    padding-right: 44px; /* 右側のアイコン（目のマーク）分の余白 */
+    font-size: 15px;
+    color: var(--text-main);
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    outline: none;
+    transition: all var(--anim-fast); /* 統一されたアニメーション変数 */
+}
+
+.input-field::placeholder {
+    color: var(--text-placeholder);
+}
+
+/* 入力中（フォーカス時）のスタイル */
+.input-field:focus {
+    background-color: var(--card-bg);
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-shadow); /* 外側に光彩を放つ */
+}
+
+/* パスワード表示/非表示切り替えボタン */
+.toggle-password {
+    position: absolute;
+    right: 14px; /* 右端に配置 */
+    cursor: pointer;
+    color: var(--text-placeholder);
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 4px;
+}
+
+.toggle-password:hover {
+    color: var(--text-main);
+}
+
+/* オプション行（チェックボックスなど） */
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    margin-top: 8px;
+}
+
+/* --- カスタムチェックボックスの実装 --- */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-sub);
+    cursor: pointer;
+    user-select: none; /* テキスト選択防止 */
+    gap: 8px;
+}
+
+/* ブラウザデフォルトのチェックボックスを非表示にする */
+.checkbox-label input {
+    display: none;
+}
+
+/* 自作のチェックボックス枠 */
+.custom-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    background-color: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+/* チェックされた時の枠と背景色 */
+.checkbox-label input:checked + .custom-checkbox {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* チェックマーク（SVG）のアニメーション */
+.custom-checkbox svg {
+    width: 12px;
+    height: 12px;
+    stroke: #FFFFFF;
+    stroke-width: 3;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0; /* 初期状態は透明 */
+    transform: scale(0.8);
+    transition: all 0.2s cubic-bezier(0.5, 1.5, 0.5, 1); /* バウンス効果 */
+}
+
+/* チェックされた時にSVGを表示・拡大 */
+.checkbox-label input:checked + .custom-checkbox svg {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* 送信ボタン（スタイルはindex.cssの.btnと類似） */
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #FFFFFF;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: all var(--anim-medium);
+}
+
+.submit-btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26, 26, 26, 0.3);
+}
+
+.submit-btn:active {
+    transform: translateY(1px) scale(0.99);
+    border-color: #e0e0e0;
+    color: #6d6d6da4;
+    box-shadow: 
+        0 0 0 transparent,
+        inset 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.1s ease-out;
+}
