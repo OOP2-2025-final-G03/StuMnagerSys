@@ -29,10 +29,18 @@ def login():
             flash('パスワードが違います', 'error')
             
     except User.DoesNotExist:
-        flash('ユーザーが見つかりません', 'error')
+        flash('ログインできませんでした', 'error')
 
     # 失敗したらログイン画面に戻る
     return redirect(url_for('login', role_type=role))
+
+# ログイン画面表示
+@auth_bp.route('/login', methods=['GET'])
+def login_page():
+    """
+    ログイン画面を表示する。
+    """
+    return redirect(url_for('login'))
 
 # ログアウト処理
 @auth_bp.route("/logout")

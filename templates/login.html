@@ -14,6 +14,14 @@
     </header>
 
     <main class="login-card">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form id="loginForm" action="{{ url_for('auth.login') }}" method="POST">
             <input type="hidden" name="role" value="{{ role }}">
             
