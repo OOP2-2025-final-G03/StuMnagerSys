@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, current_app,url_for, session, abort
 from flask_login import login_required,login_user,logout_user
-from models import User
+from models import Credential, Student, Teacher
 from flask import redirect, flash
 import datetime
 
@@ -18,17 +18,17 @@ def login():
     role = request.form.get('role', 'student')
 
     try:
-        user = User.get(User.user_id == user_id)
+        credential = Credential.get(Credential.user_id == user_id)
         
         # パスワード照合
-        if user.check_password(password):
-            login_user(user)
+        if credential.check_password(password):
+            login_user(credential)
             # ユーザーのロールに応じてリダイレクト先を変える
-            return redirect(url_for('dashboard', role_type=user.role))
+            return redirect(url_for('dashboard', role_type=role))
         else:
             flash('パスワードが違います', 'error')
             
-    except User.DoesNotExist:
+    except Credential.DoesNotExist:
         flash('ログインできませんでした', 'error')
 
     # 失敗したらログイン画面に戻る

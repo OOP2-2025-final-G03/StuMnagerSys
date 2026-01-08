@@ -1,4 +1,4 @@
 from peewee import SqliteDatabase
 
-# データベース接続の定義
+# メインデータベース接続
 db = SqliteDatabase('my_database.db')

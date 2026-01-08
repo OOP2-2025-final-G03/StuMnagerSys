@@ -4,58 +4,102 @@
 """
 
 from utils.db import db
-from models import User
+from models import Credential, Student, Teacher
 from datetime import date
 
 def init_database():
     """データベーステーブルの作成とテストデータの挿入"""
     
     # テーブル作成
-    db.create_tables([User], safe=True)
+    db.create_tables([Credential, Student, Teacher], safe=True)
     print("✓ テーブルが作成されました")
     
-    # テストユーザーの作成
-    test_users = [
+    # 既存データを削除（開発環境用）
+    Credential.delete().execute()
+    Student.delete().execute()
+    Teacher.delete().execute()
+    print("✓ 既存データをリセットしました")
+    
+    # テスト用学生データ
+    test_students = [
         {
-            'user_id': 'STU001',
+            'student_id': 'STU001',
             'name': '山田太郎',
             'birth_date': date(2006, 4, 15),
-            'role': 'student',
+            'gender': 'male',
+            'major': '情報科学科',
+        },
+        {
+            'student_id': 'STU002',
+            'name': '佐藤花子',
+            'birth_date': date(2007, 5, 20),
+            'gender': 'female',
+            'major': '情報科学科',
+        }
+    ]
+    
+    # 学生の作成
+    for student_data in test_students:
+        Student.create(**student_data)
+        print(f"✓ 学生作成: {student_data['student_id']} ({student_data['name']})")
+    
+    # テスト用教員データ
+    test_teachers = [
+        {
+            'teacher_id': 'TEA001',
+            'name': '鈴木教子',
+            'age': 45,
             'department': '情報科学科',
+            'is_admin': False,
+        },
+        {
+            'teacher_id': 'TEA002',
+            'name': '田中校長',
+            'age': 58,
+            'department': '情報科学科',
+            'is_admin': True,  # 管理者権限あり
+        }
+    ]
+    
+    # 教員の作成
+    for teacher_data in test_teachers:
+        Teacher.create(**teacher_data)
+        admin_label = " (管理者権限)" if teacher_data['is_admin'] else ""
+        print(f"✓ 教員作成: {teacher_data['teacher_id']} ({teacher_data['name']}){admin_label}")
+    
+    # テスト用認証情報
+    test_credentials = [
+        {
+            'user_id': 'STU001',
             'password_hash': 'password123'
         },
         {
+            'user_id': 'STU002',
+            'password_hash': 'password456'
+        },
+        {
             'user_id': 'TEA001',
-            'name': '鈴木教子',
-            'birth_date': date(1980, 6, 20),
-            'role': 'teacher',
-            'department': '情報科学科',
             'password_hash': 'teacher123'
         },
         {
-            'user_id': 'ADM001',
-            'name': '佐藤管理',
-            'birth_date': date(1975, 3, 10),
-            'role': 'admin',
-            'department': None,
+            'user_id': 'TEA002',
             'password_hash': 'admin123'
         }
     ]
     
-    # 既存ユーザーを削除（開発環境用）
-    User.delete().execute()
-    print("✓ 既存ユーザーをリセットしました")
-    
-    # テストユーザーを作成
-    for user_data in test_users:
-        User.create(**user_data)
-        print(f"✓ ユーザー作成: {user_data['user_id']} ({user_data['name']})")
+    # 認証情報の作成
+    for cred_data in test_credentials:
+        Credential.create(**cred_data)
+        print(f"✓ 認証情報作成: {cred_data['user_id']}")
     
     print("\n✅ データベース初期化が完了しました")
     print("\nテストユーザー:")
-    print("1. 学生: STU001 / password123")
-    print("2. 教師: TEA001 / teacher123")
-    print("3. 管理者: ADM001 / admin123")
+    print("【学生】")
+    print("1. STU001 (山田太郎) / password123")
+    print("2. STU002 (佐藤花子) / password456")
+    print("【教員】")
+    print("3. TEA001 (鈴木教子) / teacher123")
+    print("4. TEA002 (田中校長) / admin123 [管理者権限]")
 
 if __name__ == '__main__':
     init_database()

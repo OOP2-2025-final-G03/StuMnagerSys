@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort
 import datetime
 from flask_login import LoginManager
-from models import User
+from models import Credential, Student, Teacher
 from config import Config
 from routes import blueprints
 
@@ -16,8 +16,8 @@ login_manager.login_view = 'index'
 @login_manager.user_loader
 def load_user(user_id):
     try:
-        return User.get(User.user_id == user_id)
-    except User.DoesNotExist:
+        return Credential.get(Credential.user_id == user_id)
+    except Credential.DoesNotExist:
         return None
 
 for bp in blueprints:

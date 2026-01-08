@@ -1,5 +1,8 @@
-from .user import User
+from .user import User, Credential, Student, Teacher
+
 models = [
-    User
+    Credential,
+    Student,
+    Teacher
 ]
 
