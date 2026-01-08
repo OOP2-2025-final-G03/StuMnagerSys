@@ -98,19 +98,19 @@ main_content %}
   {% set current_category = request.args.get('category', 'all') %}
   <div class="filter-tabs">
     <a
-      href="{{ url_for('subject.list', category='all') }}"
+      href="{{ url_for('subject.subject_list', category='all') }}"
       class="filter-tab {{ 'active' if current_category == 'all' else '' }}"
     >
       すべて
     </a>
     <a
-      href="{{ url_for('subject.list', category='required') }}"
+      href="{{ url_for('subject.subject_list', category='required') }}"
       class="filter-tab {{ 'active' if current_category == 'required' else '' }}"
     >
       必修科目
     </a>
     <a
-      href="{{ url_for('subject.list', category='elective') }}"
+      href="{{ url_for('subject.subject_list', category='elective') }}"
       class="filter-tab {{ 'active' if current_category == 'elective' else '' }}"
     >
       選択科目
@@ -120,7 +120,7 @@ main_content %}
   <div class="list-actions">
     <form
       method="get"
-      action="{{ url_for('subject.list') }}"
+      action="{{ url_for('subject.subject_list') }}"
       class="search-box"
     >
       <input

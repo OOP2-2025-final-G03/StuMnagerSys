@@ -4,7 +4,7 @@ import datetime
 users_bp = Blueprint('user', __name__, url_prefix='/user')
 
 @users_bp.route('/list')
-def list():
+def user_list():
     """
     ユーザー管理ページ。
     管理者以外のアクセスは禁止されています。

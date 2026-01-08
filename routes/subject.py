@@ -1,34 +1,34 @@
 from flask import Blueprint, render_template, request, redirect, url_for
-from utils.db import get_db_connection
+from models import Subject
+from peewee import fn
 
 subject_bp = Blueprint('subject', __name__, url_prefix='/subject')
 
+
+# ========================
+# 科目一覧
+# ========================
 @subject_bp.route('/list')
-def list():
+def subject_list():
     category = request.args.get('category', 'all')
     keyword = request.args.get('keyword', '').strip()
     role_type = 'admin'
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    sql = "SELECT * FROM subjects WHERE 1=1"
-    params = []
+    query = Subject.select()
 
     # 区分フィルタ
     if category in ('required', 'elective'):
-        sql += " AND category = ?"
-        params.append(category)
+        query = query.where(Subject.category == category)
 
     # キーワード検索
     if keyword:
-        sql += " AND (name LIKE ? OR major LIKE ? OR day LIKE ?)"
-        like = f"%{keyword}%"
-        params.extend([like, like, like])
+        query = query.where(
+            (Subject.name.contains(keyword)) |
+            (Subject.major.contains(keyword)) |
+            (Subject.day.contains(keyword))
+        )
 
-    cur.execute(sql, params)
-    subjects = cur.fetchall()
-    conn.close()
+    subjects = list(query)
 
     return render_template(
         'subject/subject_list.html',
@@ -39,34 +39,24 @@ def list():
     )
 
 
-
-
+# ========================
+# 科目新規作成
+# ========================
 @subject_bp.route('/create', methods=['GET', 'POST'])
 def create():
     role_type = 'admin'
 
     if request.method == 'POST':
-        name = request.form['name']
-        major = request.form['major']
-        category = request.form['category']
-        grade = int(request.form['grade'])
-        credits = int(request.form['credits'])
-        day = request.form['day']
-        period = int(request.form['period'])
-
-        conn = get_db_connection()
-        conn.execute(
-            """
-            INSERT INTO subjects
-            (name, major, category, grade, credits, day, period)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (name, major, category, grade, credits, day, period)
+        Subject.create(
+            name=request.form['name'],
+            major=request.form['major'],
+            category=request.form['category'],
+            grade=int(request.form['grade']),
+            credits=int(request.form['credits']),
+            day=request.form['day'],
+            period=int(request.form['period'])
         )
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('subject.list'))
+        return redirect(url_for('subject.subject_list'))
 
     return render_template(
         'subject/subject_form.html',
@@ -77,39 +67,28 @@ def create():
     )
 
 
-
-
+# ========================
+# 科目編集
+# ========================
 @subject_bp.route('/edit/<int:subject_id>', methods=['GET', 'POST'])
 def edit(subject_id):
     role_type = 'admin'
-    conn = get_db_connection()
-    cur = conn.cursor()
+    subject = Subject.get_or_none(Subject.id == subject_id)
+
+    if subject is None:
+        return redirect(url_for('subject.subject_list'))
 
     if request.method == 'POST':
-        conn.execute(
-            """
-            UPDATE subjects
-            SET name=?, major=?, category=?, grade=?, credits=?, day=?, period=?
-            WHERE id=?
-            """,
-            (
-                request.form['name'],
-                request.form['major'],
-                request.form['category'],
-                int(request.form['grade']),
-                int(request.form['credits']),
-                request.form['day'],
-                int(request.form['period']),
-                subject_id
-            )
-        )
-        conn.commit()
-        conn.close()
-        return redirect(url_for('subject.list'))
+        subject.name = request.form['name']
+        subject.major = request.form['major']
+        subject.category = request.form['category']
+        subject.grade = int(request.form['grade'])
+        subject.credits = int(request.form['credits'])
+        subject.day = request.form['day']
+        subject.period = int(request.form['period'])
+        subject.save()
 
-    cur.execute("SELECT * FROM subjects WHERE id=?", (subject_id,))
-    subject = cur.fetchone()
-    conn.close()
+        return redirect(url_for('subject.subject_list'))
 
     return render_template(
         'subject/subject_form.html',
@@ -120,12 +99,10 @@ def edit(subject_id):
     )
 
 
-
-
-@subject_bp.route('/delete/<subject_id>')
+# ========================
+# 科目削除
+# ========================
+@subject_bp.route('/delete/<int:subject_id>')
 def delete(subject_id):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM subjects WHERE id=?", (subject_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('subject.list'))
+    Subject.delete_by_id(subject_id)
+    return redirect(url_for('subject.subject_list'))
