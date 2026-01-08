@@ -1,0 +1,98 @@
+{% extends active_template %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block page_title %}プロフィール{% endblock %}
+
+{% block main_content %}
+    <div style="margin-bottom: 24px;">
+        <h2 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-main);">{{ title }}</h2>
+        <p style="margin:4px 0 0; font-size:0.875rem; color:var(--text-sub);">プロフィール情報の確認と編集ができます。</p>
+    </div>
+
+    <div class="profile-container">
+        
+        <aside class="profile-sidebar">
+            <div class="profile-card user-overview">
+                <div class="large-avatar">
+                    {{ user.name[0] }}
+                </div>
+                
+                <h3 class="profile-name">{{ user.name }}</h3>
+                <p class="profile-id">ID: {{ user.id }}</p>
+                
+                <span class="profile-role-badge bg-role-admin">
+                    {{ user.role | upper }}
+                </span>
+
+                <div class="profile-divider"></div>
+
+                <div class="info-row">
+                    <span class="info-label">登録日</span>
+                    <span class="info-value">{{ user.joined_at }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">状態</span>
+                    <span style="color: #166534; font-weight: 600;">有効</span>
+                </div>
+            </div>
+        </aside>
+
+        <div class="profile-content">
+            <div class="profile-card">
+                <h3 class="section-title">基本情報</h3>
+                
+                <form action="#" method="POST">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">氏名</label>
+                            <input type="text" class="form-input" value="{{ user.name }}" disabled style="opacity: 0.7; cursor: not-allowed;">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">メールアドレス</label>
+                            <input type="email" class="form-input" value="{{ user.email }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">電話番号</label>
+                            <input type="tel" class="form-input" value="{{ user.phone }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">所属 / 学科</label>
+                            <input type="text" class="form-input" value="情報システム部" disabled style="opacity: 0.7;">
+                        </div>
+
+                        <div class="form-group form-full">
+                            <label class="form-label">自己紹介 (Bio)</label>
+                            <textarea class="form-textarea" placeholder="自己紹介を入力してください...">{{ user.bio }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="profile-divider"></div>
+
+                    <h3 class="section-title">セキュリティ</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">新しいパスワード</label>
+                            <input type="password" class="form-input" placeholder="変更する場合のみ入力">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">パスワード確認</label>
+                            <input type="password" class="form-input" placeholder="もう一度入力">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="#" class="btn-cancel">キャンセル</a>
+                        <button type="submit" class="btn-save">変更を保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

@@ -49,6 +49,12 @@ body {
     transition: background-color 0.2s;
 }
 
+.user-profile-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 .sidebar:hover .user-profile:hover {
     background-color: var(--hover-bg);
 }
@@ -85,6 +91,23 @@ body {
 
 .user-role {
     font-size: 12px;
+    color: var(--text-sub);
+}
+
+.user-profile.active{
+    background-color: var(--active-bg);
+    box-shadow: var(--shadow-md);
+}
+
+.user-profile.active .user-name {
+    color: var(--page-bg);
+}
+
+.user-profile.active:hover .user-name {
+    color: var(--text-main);
+}
+
+.user-profile.active .user-role {
     color: var(--text-sub);
 }
 
@@ -181,6 +204,9 @@ body {
     gap: 32px;
     overflow-y: auto; /* コンテンツが溢れた場合のみスクロールバーを表示 */
     transition: margin-left var(--anim-slow);
+    
+    opacity: 0;
+    animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .content-header {

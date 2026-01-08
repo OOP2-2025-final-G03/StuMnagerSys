@@ -3,7 +3,6 @@ from utils.db import get_db_connection
 
 subject_bp = Blueprint('subject', __name__, url_prefix='/subject')
 
-
 @subject_bp.route('/list')
 def list():
     category = request.args.get('category', 'all')
