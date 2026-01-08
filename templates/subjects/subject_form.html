@@ -1,0 +1,58 @@
+{% extends active_template %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-card">
+  <form method="post">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>科目名</label>
+        <input type="text" name="name" required
+               value="{{ subject.name if subject }}">
+      </div>
+
+      <div class="form-group">
+        <label>担当教員</label>
+        <input type="text" name="teacher" required
+               value="{{ subject.teacher if subject }}">
+      </div>
+
+      <div class="form-group">
+        <label>区分</label>
+        <select name="type">
+          <option value="required"
+            {% if subject and subject.type == 'required' %}selected{% endif %}>
+            必修
+          </option>
+          <option value="elective"
+            {% if subject and subject.type == 'elective' %}selected{% endif %}>
+            選択
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>単位数</label>
+        <input type="number" name="credits" min="1" max="10" required
+               value="{{ subject.credits if subject }}">
+      </div>
+
+      <div class="form-group">
+        <label>開講時期</label>
+        <input type="text" name="schedule"
+               value="{{ subject.schedule if subject }}">
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">保存</button>
+      <a href="{{ url_for('subject.list') }}" class="btn-secondary">戻る</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
