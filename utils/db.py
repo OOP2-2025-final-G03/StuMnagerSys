@@ -1,4 +1,8 @@
-from peewee import SqliteDatabase
+import sqlite3
 
-# データベース接続の定義
-db = SqliteDatabase('my_database.db')
+DB_PATH = "database.db"
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn

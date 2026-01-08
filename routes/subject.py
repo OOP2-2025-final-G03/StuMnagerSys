@@ -1,50 +1,131 @@
-from flask import Blueprint, render_template, request
-import datetime
+from flask import Blueprint, render_template, request, redirect, url_for
+from utils.db import get_db_connection
 
 subject_bp = Blueprint('subject', __name__, url_prefix='/subject')
 
 @subject_bp.route('/list')
 def list():
-    """
-    科目管理ページ
-    """
-    # ロールタイプを取得
-    # TODO:
-    # ここでセッションや認証情報をチェックして、
-    # ユーザーが正しいロールでログインしているか確認する必要があります。
-    role_type = 'admin'  # 仮のロールタイプ。実際にはセッションから取得する。
+    category = request.args.get('category', 'all')
+    keyword = request.args.get('keyword', '').strip()
+    role_type = 'admin'
 
-    filter_type = request.args.get('type', 'all')
-    
-    # デモ用の静的データ
-    all_subjects = [
-        {'id': 'SUB001', 'name': 'プログラミング基礎', 'teacher': '11 先生', 'credits': 2, 'type': 'required', 'schedule': '月2'},
-        {'id': 'SUB002', 'name': 'Web開発演習',       'teacher': '22先生', 'credits': 4, 'type': 'required', 'schedule': '火3-4'},
-        {'id': 'SUB003', 'name': 'データベース論',     'teacher': '33 先生', 'credits': 2, 'type': 'elective', 'schedule': '水1'},
-        {'id': 'SUB004', 'name': 'AIシステム概論',     'teacher': '44 先生', 'credits': 2, 'type': 'elective', 'schedule': '金2'},
-        {'id': 'SUB005', 'name': 'ビジネス英語',       'teacher': '55 先生',   'credits': 1, 'type': 'elective', 'schedule': '木1'},
-    ]
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    # フィルタリングロジック
-    display_data = []
-    if filter_type == 'required':
-        display_data = [s for s in all_subjects if s['type'] == 'required']
-        page_title = '科目管理 (必修のみ)'
-    elif filter_type == 'elective':
-        display_data = [s for s in all_subjects if s['type'] == 'elective']
-        page_title = '科目管理 (選択のみ)'
-    else:
-        display_data = all_subjects
-        page_title = '科目管理 (すべて)'
+    sql = "SELECT * FROM subjects WHERE 1=1"
+    params = []
 
-    active_template = f"dashboard/{role_type}.html"
+    # 区分フィルタ
+    if category in ('required', 'elective'):
+        sql += " AND category = ?"
+        params.append(category)
+
+    # キーワード検索
+    if keyword:
+        sql += " AND (name LIKE ? OR major LIKE ? OR day LIKE ?)"
+        like = f"%{keyword}%"
+        params.extend([like, like, like])
+
+    cur.execute(sql, params)
+    subjects = cur.fetchall()
+    conn.close()
 
     return render_template(
-        "subject/subject_list.html",
-        active_template=active_template,
-        active_page='subjects', 
+        'subject/subject_list.html',
+        subjects=subjects,
+        title='科目管理',
         role=role_type,
-        title=page_title,
-        subjects=display_data,
-        current_date=datetime.datetime.now().strftime('%Y年%m月%d日')
+        active_template=f'dashboard/{role_type}.html'
     )
+
+
+
+
+@subject_bp.route('/create', methods=['GET', 'POST'])
+def create():
+    role_type = 'admin'
+
+    if request.method == 'POST':
+        name = request.form['name']
+        major = request.form['major']
+        category = request.form['category']
+        grade = int(request.form['grade'])
+        credits = int(request.form['credits'])
+        day = request.form['day']
+        period = int(request.form['period'])
+
+        conn = get_db_connection()
+        conn.execute(
+            """
+            INSERT INTO subjects
+            (name, major, category, grade, credits, day, period)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (name, major, category, grade, credits, day, period)
+        )
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('subject.list'))
+
+    return render_template(
+        'subject/subject_form.html',
+        title='科目新規登録',
+        subject=None,
+        role=role_type,
+        active_template=f'dashboard/{role_type}.html'
+    )
+
+
+
+
+@subject_bp.route('/edit/<int:subject_id>', methods=['GET', 'POST'])
+def edit(subject_id):
+    role_type = 'admin'
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    if request.method == 'POST':
+        conn.execute(
+            """
+            UPDATE subjects
+            SET name=?, major=?, category=?, grade=?, credits=?, day=?, period=?
+            WHERE id=?
+            """,
+            (
+                request.form['name'],
+                request.form['major'],
+                request.form['category'],
+                int(request.form['grade']),
+                int(request.form['credits']),
+                request.form['day'],
+                int(request.form['period']),
+                subject_id
+            )
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for('subject.list'))
+
+    cur.execute("SELECT * FROM subjects WHERE id=?", (subject_id,))
+    subject = cur.fetchone()
+    conn.close()
+
+    return render_template(
+        'subject/subject_form.html',
+        title='科目編集',
+        subject=subject,
+        role=role_type,
+        active_template=f'dashboard/{role_type}.html'
+    )
+
+
+
+
+@subject_bp.route('/delete/<subject_id>')
+def delete(subject_id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM subjects WHERE id=?", (subject_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('subject.list'))
