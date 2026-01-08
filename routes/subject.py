@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request
 import datetime
 
-subject_bp = Blueprint('subject', __name__, url_prefix='/subjects')
+subject_bp = Blueprint('subject', __name__, url_prefix='/subject')
 
-@subject_bp.route('/')
+@subject_bp.route('/list')
 def list():
     """
     科目管理ページ
@@ -40,7 +40,7 @@ def list():
     active_template = f"dashboard/{role_type}.html"
 
     return render_template(
-        "subjects/subject_list.html",
+        "subject/subject_list.html",
         active_template=active_template,
         active_page='subjects', 
         role=role_type,

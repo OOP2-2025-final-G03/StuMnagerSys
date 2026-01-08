@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, current_app, abort
 import datetime
 
-users_bp = Blueprint('user', __name__, url_prefix='/users')
+users_bp = Blueprint('user', __name__, url_prefix='/user')
 
-@users_bp.route('/')
+@users_bp.route('/list')
 def list():
     """
     ユーザー管理ページ。
@@ -40,7 +40,7 @@ def list():
         page_title = 'ユーザー管理 (すべて)'
 
     return render_template(
-        "users/user_list.html",
+        "user/user_list.html",
         active_template='dashboard/admin.html',
         role='admin', 
         active_page='users',
