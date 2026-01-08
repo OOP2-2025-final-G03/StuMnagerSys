@@ -32,7 +32,7 @@ def list():
     conn.close()
 
     return render_template(
-        'subjects/subject_list.html',
+        'subject/subject_list.html',
         subjects=subjects,
         title='科目管理',
         role=role_type,
@@ -70,7 +70,7 @@ def create():
         return redirect(url_for('subject.list'))
 
     return render_template(
-        'subjects/subject_form.html',
+        'subject/subject_form.html',
         title='科目新規登録',
         subject=None,
         role=role_type,
@@ -113,7 +113,7 @@ def edit(subject_id):
     conn.close()
 
     return render_template(
-        'subjects/subject_form.html',
+        'subject/subject_form.html',
         title='科目編集',
         subject=subject,
         role=role_type,
