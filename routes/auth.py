@@ -1,7 +1,46 @@
-from flask import Blueprint, render_template, request, current_app, abort
+from flask import Blueprint, render_template, request, current_app,url_for, session, abort
+from flask_login import login_required,login_user,logout_user
+from models import User
+from flask import redirect, flash
 import datetime
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+# ログイン処理
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """
+    ユーザーログイン処理。
+    フォームから送信されたユーザーIDとパスワードを検証し、ログインを行う。
+    """
+    user_id = request.form.get('user_id')
+    password = request.form.get('password')
+    role = request.form.get('role', 'student')
+
+    try:
+        user = User.get(User.user_id == user_id)
+        
+        # パスワード照合
+        if user.check_password(password):
+            login_user(user)
+            # ユーザーのロールに応じてリダイレクト先を変える
+            return redirect(url_for('dashboard', role_type=user.role))
+        else:
+            flash('パスワードが違います', 'error')
+            
+    except User.DoesNotExist:
+        flash('ユーザーが見つかりません', 'error')
+
+    # 失敗したらログイン画面に戻る
+    return redirect(url_for('login', role_type=role))
+
+# ログアウト処理
+@auth_bp.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
 
 @auth_bp.route('/me')
 def profile():
@@ -34,12 +73,5 @@ def profile():
 def settings():
     """
     ユーザー設定ページ。
-    """
-    pass
-
-@auth_bp.route("/me/logout")
-def logout():
-    """
-    ユーザーログアウト。
     """
     pass

@@ -3,10 +3,11 @@ from peewee import (
     CharField,
     DateField
 )
+from flask_login import UserMixin
 from utils import db
 
 
-class User(Model):
+class User(UserMixin,Model):
     """
     ユーザー情報を管理するモデル。
     学生・教師・スーパーユーザーを role で区別する。
@@ -17,10 +18,24 @@ class User(Model):
     birth_date = DateField(null=True)
     role = CharField()  # 'student' / 'teacher' / 'superuser'
     department = CharField(null=True)
+    password_hash = CharField()
 
     class Meta:
         database = db
         table_name = 'users'
+
+    def get_id(self):
+        """
+        ユーザーの一意識別子を取得する。
+
+        Returns:
+            str: ユーザーID
+        """
+        return self.user_id
+    
+    def check_password(self, password_input):
+        # ここでハッシュ化のチェックを行いますが、まずは単純比較でOKならこう書きます
+        return self.password_hash == password_input
 
     def is_student(self) -> bool:
         """
@@ -48,6 +63,7 @@ class User(Model):
             bool: スーパーユーザーの場合 True
         """
         return self.role == 'superuser'
+    
 
     def to_dict(self) -> dict:
         """
@@ -64,3 +80,5 @@ class User(Model):
             "role": self.role,
             "department": self.department,
         }
+    
+
