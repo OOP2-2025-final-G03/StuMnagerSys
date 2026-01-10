@@ -100,7 +100,6 @@ class Teacher(Model):
             "name": self.name,
             "age": self.age,
             "department": self.department,
-            "is_admin": self.is_admin,
         }
 
 
