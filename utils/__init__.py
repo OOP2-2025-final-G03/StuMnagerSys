@@ -1,5 +1,1 @@
-from db import db
-
-utils = [
-    db
-]
+from .db import db

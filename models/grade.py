@@ -9,3 +9,4 @@ class Grade(Model):
 
     class Meta:
         database = db
+        table_name = 'grades'

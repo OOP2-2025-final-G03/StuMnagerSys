@@ -16,9 +16,9 @@
 
         {% set current_role = request.args.get('role', 'all') %}
         <div class="filter-tabs">
-            <a href="{{ url_for('user.list', role='all') }}" class="filter-tab {{ 'active' if current_role == 'all' else '' }}">すべて</a>
-            <a href="{{ url_for('user.list', role='student') }}" class="filter-tab {{ 'active' if current_role == 'student' else '' }}">学生</a>   
-            <a href="{{ url_for('user.list', role='teacher') }}" class="filter-tab {{ 'active' if current_role == 'teacher' else '' }}">教員</a>
+            <a href="{{ url_for('user.user_list', role='all') }}" class="filter-tab {{ 'active' if current_role == 'all' else '' }}">すべて</a>
+            <a href="{{ url_for('user.user_list', role='student') }}" class="filter-tab {{ 'active' if current_role == 'student' else '' }}">学生</a>   
+            <a href="{{ url_for('user.user_list', role='teacher') }}" class="filter-tab {{ 'active' if current_role == 'teacher' else '' }}">教員</a>
         </div>
 
         <div class="list-actions">
