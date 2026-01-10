@@ -76,9 +76,8 @@ flowchart LR
     %% 学生
     subgraph Student[学生]
         S1[科目閲覧]
-        S2[履修登録]
-        S3[成績閲覧]
-        S4[成績分析]
+        S2[成績閲覧]
+        S3[成績分析]
     end
 
     %% 教師
