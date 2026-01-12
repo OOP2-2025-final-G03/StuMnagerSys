@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort
 import datetime
 from flask_login import LoginManager
-from models import Credential, Student, Teacher
-from config import Config
+from models import Password, Student, Teacher
+from utils.config import Config
 from routes import blueprints
 
 
@@ -16,8 +16,8 @@ login_manager.login_view = 'index'
 @login_manager.user_loader
 def load_user(user_id):
     try:
-        return Credential.get(Credential.user_id == user_id)
-    except Credential.DoesNotExist:
+        return Password.get(Password.user_id == user_id)
+    except Password.DoesNotExist:
         return None
 
 for bp in blueprints:
@@ -26,15 +26,6 @@ for bp in blueprints:
 @app.route('/')
 def index():
     return render_template("index.html")
-
-@app.route('/login/<role_type>')
-def login(role_type):
-    if role_type not in Config.ROLE_TITLES:
-        abort(404)
-    
-    page_title = Config.ROLE_TITLES[role_type]
-
-    return render_template("login.html", title=page_title, role=role_type)
 
 @app.route('/dashboard/<role_type>')
 def dashboard(role_type):

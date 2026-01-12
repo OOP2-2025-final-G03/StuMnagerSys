@@ -1,0 +1,83 @@
+{% extends active_template %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_form.css') }}">
+{% endblock %}
+
+{% block page_title %}
+{{ 'ユーザー編集' if user else 'ユーザー新規登録' }}
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-card">
+  <h2>{{ 'ユーザー編集' if user else 'ユーザー新規登録' }}</h2>
+
+  <form id="user-form"
+        data-mode="{{ 'edit' if user else 'create' }}"
+        {% if user %}data-user-id="{{ user.user_id }}"{% endif %}>
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>ユーザーID</label>
+        <input type="text" id="user_id"
+               value="{{ user.user_id if user else '' }}"
+               {{ 'readonly' if user else 'required' }}>
+      </div>
+
+      <div class="form-group">
+        <label>名前</label>
+        <input type="text" id="name"
+               value="{{ user.name if user else '' }}"
+               required>
+      </div>
+
+      <div class="form-group">
+        <label>生年月日</label>
+        <input type="date" id="birth_date"
+               value="{{ user.birth_date if user else '' }}">
+      </div>
+
+      <div class="form-group">
+        <label>性別</label>
+        <select id="gender">
+          <option value="">選択してください</option>
+          <option value="male" {% if user and user.gender == 'male' %}selected{% endif %}>男性</option>
+          <option value="female" {% if user and user.gender == 'female' %}selected{% endif %}>女性</option>
+          <option value="other" {% if user and user.gender == 'other' %}selected{% endif %}>その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>役割</label>
+        <select id="role" required>
+          <option value="student" {% if user and user.role == 'student' %}selected{% endif %}>学生</option>
+          <option value="teacher" {% if user and user.role == 'teacher' %}selected{% endif %}>教師</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>所属</label>
+        <input type="text" id="department"
+               value="{{ user.department if user else '' }}">
+      </div>
+
+      <div class="form-group">
+        <label>{{ '新しいパスワード（変更時のみ）' if user else '初期パスワード' }}</label>
+        <input type="password" id="password"
+               {{ 'required' if not user }}>
+      </div>
+
+    </div>
+
+    <button type="submit" class="btn-primary">
+      {{ '更新' if user else '登録' }}
+    </button>
+
+  </form>
+
+  <p id="message" class="message"></p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/users.js') }}"></script>
+{% endblock %}

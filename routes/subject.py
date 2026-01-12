@@ -32,6 +32,7 @@ def subject_list():
 
     return render_template(
         'subject/subject_list.html',
+        active_page='subjects',
         subjects=subjects,
         title='科目管理',
         role=role_type,
@@ -60,6 +61,7 @@ def create():
 
     return render_template(
         'subject/subject_form.html',
+        active_page='subjects',
         title='科目新規登録',
         subject=None,
         role=role_type,
@@ -92,6 +94,7 @@ def edit(subject_id):
 
     return render_template(
         'subject/subject_form.html',
+        active_page='subjects',
         title='科目編集',
         subject=subject,
         role=role_type,

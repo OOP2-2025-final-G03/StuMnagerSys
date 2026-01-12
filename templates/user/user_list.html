@@ -10,7 +10,7 @@
     <div class="list-card">
         
         <div class="list-header">
-            <h2>{{ title }}</h2>
+            <h2>ユーザー管理</h2>
             <p>システムに登録されているユーザーを管理します。</p>
         </div>
 
@@ -23,9 +23,9 @@
 
         <div class="list-actions">
             <div class="search-box">
-                <input type="text" placeholder="名前、ID、クラスで検索...">
+                <input type="text" placeholder="名前、ID、所属で検索...">
             </div>
-            <a href="#" class="btn-add">
+            <a href="{{ url_for('user.new_user_form') }}" class="btn-add">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                 新規登録
             </a>
@@ -35,15 +35,17 @@
             <table class="styled-table">
                 <thead>
                     <tr>
-                        <th width="80">ID</th>
+                        <th width="100">ID</th>
                         <th>氏名</th>
                         <th width="100">区分</th>
-                        {% if current_role == 'student' %}
-                            <th>クラス</th>
-                        {% else %}
-                            <th>担当教科</th>
-                        {% endif %}
-                        <th>ステータス</th>
+                        
+                        {# --- カラムヘッダーの動的切り替え (専攻/学科) --- #}
+                        <th>専攻 / 学科</th>
+                        
+                        <th>生年月日</th>
+                        
+                        <th>性別</th>
+
                         <th width="140">操作</th>
                     </tr>
                 </thead>
@@ -51,34 +53,54 @@
                     {% if users|length > 0 %}
                         {% for user in users %}
                         <tr>
-                            <td style="font-family: monospace;">{{ user.id }}</td>
+                            {# --- ID: モデルに合わせて student_id / teacher_id を切り替え --- #}
+                            <td style="font-family: monospace;">
+                                {{ user.student_id if user.role == 'student' else user.teacher_id }}
+                            </td>
+                            
                             <td>
                                 <div class="user-cell">
                                     <div class="avatar-placeholder">{{ user.name[0] }}</div>
                                     <span class="user-name-text">{{ user.name }}</span>
                                 </div>
                             </td>
+                            
                             <td>
                                 <span class="role-badge {{ 'role-student' if user.role == 'student' else 'role-teacher' }}">
                                     {{ '学生' if user.role == 'student' else '教員' }}
                                 </span>
                             </td>
-                            <td>{{ user.info }}</td>
+                            
+                            {# --- 専攻 / 学科 の表示 --- #}
                             <td>
-                                <span class="status-badge {{ 'status-active' if user.status in ['在籍', '常勤'] else 'status-inactive' }}">
-                                    {{ user.status }}
-                                </span>
+                                {{ user.major if user.role == 'student' else user.department }}
                             </td>
+                            
+                            {# --- 生年月日 の表示 --- #}
+                            <td>
+                                <span style="color: #64748b;">{{ user.birth_date }}</span>
+                            </td>
+                            {# --- 性別 の表示 --- #}
+                            <td>
+                                <span style="color: #64748b;">{{ user.gender }}</span>
+                            </td>
+                            
                             <td>
                                 <div class="action-buttons">
-                                    <a href="#" class="action-link edit-link">
-                                        <svg style="margin-right:4px;" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    {# ID引数を動的に設定 #}
+                                    {% set u_id = user.student_id if user.role == 'student' else user.teacher_id %}
+                                    
+                                    <a href="{{ url_for('user.edit', user_id=u_id) }}" class="action-link edit-link">
                                         編集
                                     </a>
-                                    <a href="#" class="action-link delete-link">
-                                        <svg style="margin-right:4px;" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                        削除
-                                    </a>
+                                    <form method="post"
+                                        action="{{ url_for('user.delete_user', user_id=u_id) }}"
+                                        style="display:inline;"
+                                        onsubmit="return confirm('本当に削除しますか？')">
+                                        <button class="action-link delete-link" type="submit">
+                                            削除
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
