@@ -40,10 +40,12 @@ class Password(Model):
             raw_password (str): 平文パスワード
 
         """
-        Password.create(
+        cls.get_or_create(
             user_id=user_id,
-            password_hash=generate_password_hash(raw_password),
-            role=role
+            defaults={
+                "password_hash": generate_password_hash(raw_password),
+                "role": role
+            }
         )
 
     def verify_password(self, raw_password: str) -> bool:

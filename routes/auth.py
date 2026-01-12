@@ -1,11 +1,19 @@
 from flask import Blueprint, render_template, request, current_app,url_for, session, abort
-from flask_login import login_required,login_user,logout_user
+from flask_login import login_required,login_user,logout_user, LoginManager
 from models import Password, Student, Teacher, User
 from flask import redirect, flash
 from utils import Config
 import datetime
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+login_manager = LoginManager()
+@login_manager.user_loader
+def load_user(user_id):
+    try:
+        return User.get(User.user_id == user_id)
+    except User.DoesNotExist:
+        return None
 
 # ログイン処理
 @auth_bp.route('/login', methods=['POST'])

@@ -1,24 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort
 import datetime
-from flask_login import LoginManager
-from models import Password, Student, Teacher
+from models import Password, initialize_database
 from utils.config import Config
 from routes import blueprints
+from routes.auth import login_manager
 
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
-login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'index'
-
-@login_manager.user_loader
-def load_user(user_id):
-    try:
-        return Password.get(Password.user_id == user_id)
-    except Password.DoesNotExist:
-        return None
+login_manager.login_view = 'auth.login_page'
 
 for bp in blueprints:
     app.register_blueprint(bp)
@@ -52,4 +43,7 @@ def dashboard(role_type):
                          active_page='dashboard')
 
 if __name__ == '__main__':
+    # データベースの初期化
+    initialize_database()
+    
     app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)

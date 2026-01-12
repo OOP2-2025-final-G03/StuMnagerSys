@@ -88,9 +88,9 @@ def init_database():
             'role':'teacher'
         },
         {
-            'user_id': 'STU002',
-            'password': 'password456',
-            'role':'student'
+            'user_id': 'TEA002',
+            'password': 'teacher456',
+            'role':'teacher'
         },
         {
             'user_id': 'admin',
