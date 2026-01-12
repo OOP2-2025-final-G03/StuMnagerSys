@@ -1,16 +1,11 @@
-{% extends "content_base.html" %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user_form.css') }}">
-{% endblock %}
+{% extends active_template %}
 
 {% block page_title %}
 {{ 'ユーザー編集' if user else 'ユーザー新規登録' }}
 {% endblock %}
 
-{% block main_content %}
-<div class="dashboard-card user-form-card">
-
+{% block dashboard_content %}
+<div class="dashboard-card">
   <h2>{{ 'ユーザー編集' if user else 'ユーザー新規登録' }}</h2>
 
   <form id="user-form"
