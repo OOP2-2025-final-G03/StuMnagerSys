@@ -4,7 +4,7 @@
 """
 
 from utils.db import db
-from models import Credential, Student, Teacher, Subject, Grade
+from models import Password, Student, Teacher, Subject, Grade, User
 from datetime import date
 
 
@@ -12,15 +12,16 @@ def init_database():
     """データベーステーブルの作成とテストデータの挿入"""
     
     # テーブル作成
-    db.create_tables([Credential, Student, Teacher, Subject, Grade], safe=True)
+    db.create_tables([Password, Student, Teacher, Subject, Grade, User], safe=True)
     print("✓ テーブルが作成されました")
     
     # 既存データを削除（開発環境用）
-    Credential.delete().execute()
+    Password.delete().execute()
     Student.delete().execute()
     Teacher.delete().execute()
     Subject.delete().execute()
     Grade.delete().execute()
+    User.delete().execute()
     print("✓ 既存データをリセットしました")
     
     # テスト用学生データ
@@ -51,13 +52,15 @@ def init_database():
         {
             'teacher_id': 'TEA001',
             'name': '鈴木教子',
-            'age': 45,
+            'birth_date': date(1976, 3, 10),
+            'gender': 'male',
             'department': '情報科学科',
         },
         {
             'teacher_id': 'TEA002',
             'name': '田中校長',
-            'age': 58,
+            'birth_date': date(1968, 8, 25),
+            'gender': 'male',
             'department': '情報科学科',
         }
     ]
@@ -65,30 +68,57 @@ def init_database():
     # 教員の作成
     for teacher_data in test_teachers:
         Teacher.create(**teacher_data)
-        admin_label = " (管理者権限)" if teacher_data['is_admin'] else ""
-        print(f"✓ 教員作成: {teacher_data['teacher_id']} ({teacher_data['name']}){admin_label}")
+        print(f"✓ 教員作成: {teacher_data['teacher_id']} ({teacher_data['name']})")
     
     # テスト用認証情報
     test_credentials = [
         {
             'user_id': 'STU001',
-            'password_hash': 'password123'
+            'password': 'password123',
             'role':'student'
         },
         {
             'user_id': 'STU002',
-            'password_hash': 'password456'
+            'password': 'password456',
             'role':'student'
         },
         {
             'user_id': 'TEA001',
-            'password_hash': 'teacher123'
+            'password': 'teacher123',
             'role':'teacher'
         },
         {
-            'user_id': 'TEA002',
-            'password_hash': 'admin123'
+            'user_id': 'STU002',
+            'password': 'password456',
+            'role':'student'
+        },
+        {
+            'user_id': 'admin',
+            'password': 'admin',
             'role':'admin'
+        }
+    ]
+    
+    test_users = [
+        {
+            'user_id': 'STU001',
+            'role': 'student',
+        },
+        {
+            'user_id': 'STU002',
+            'role': 'student',
+        },
+        {
+            'user_id': 'TEA001',
+            'role': 'teacher',
+        },
+        {
+            'user_id': 'TEA002',
+            'role': 'teacher',
+        },
+        {
+            'user_id': 'admin',
+            'role': 'admin',
         }
     ]
     
@@ -142,6 +172,7 @@ def init_database():
             'period': 5,
         },
     ]
+    
 
     for subject_data in test_subjects:
         Subject.create(**subject_data)
@@ -150,8 +181,13 @@ def init_database():
     
     # 認証情報の作成
     for cred_data in test_credentials:
-        Credential.create(**cred_data)
+        Password.create_password(user_id=cred_data['user_id'], raw_password=cred_data['password'], role=cred_data['role'])
         print(f"✓ 認証情報作成: {cred_data['user_id']}")
+        
+
+    for user_data in test_users:
+        User.create(**user_data)
+        print(f"✓ ユーザー作成: {user_data['user_id']} ({user_data['role']})")
     
     print("\n✅ データベース初期化が完了しました")
     print("\nテストユーザー:")

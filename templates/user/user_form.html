@@ -1,16 +1,20 @@
 {% extends active_template %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_form.css') }}">
+{% endblock %}
+
 {% block page_title %}
 {{ 'ユーザー編集' if user else 'ユーザー新規登録' }}
 {% endblock %}
 
-{% block dashboard_content %}
+{% block main_content %}
 <div class="dashboard-card">
   <h2>{{ 'ユーザー編集' if user else 'ユーザー新規登録' }}</h2>
 
   <form id="user-form"
         data-mode="{{ 'edit' if user else 'create' }}"
-        {% if user %}data-user-id="{{ user.id }}"{% endif %}>
+        {% if user %}data-user-id="{{ user.user_id }}"{% endif %}>
 
     <div class="form-grid">
 
@@ -35,11 +39,19 @@
       </div>
 
       <div class="form-group">
-        <label>権限</label>
+        <label>性別</label>
+        <select id="gender">
+          <option value="">選択してください</option>
+          <option value="male" {% if user and user.gender == 'male' %}selected{% endif %}>男性</option>
+          <option value="female" {% if user and user.gender == 'female' %}selected{% endif %}>女性</option>
+          <option value="other" {% if user and user.gender == 'other' %}selected{% endif %}>その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>役割</label>
         <select id="role" required>
-          <option value="student">学生</option>
-          <option value="teacher">教師</option>
-          <option value="superuser">管理者</option>
+          <option value="student" {% if user and user.role == 'student' %}selected{% endif %}>学生</option>
+          <option value="teacher" {% if user and user.role == 'teacher' %}selected{% endif %}>教師</option>
         </select>
       </div>
 
@@ -65,4 +77,7 @@
 
   <p id="message" class="message"></p>
 </div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/users.js') }}"></script>
 {% endblock %}

@@ -1,12 +1,12 @@
 from peewee import (
     Model,
     CharField,
-    ForeignKeyField
+    ForeignKeyField,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from utils.db import db
-from models.user import User
+from utils import db
+from .user import User
 
 
 class Password(Model):
@@ -15,33 +15,35 @@ class Password(Model):
     パスワードは平文では保存せず、ハッシュ化して保存する。
     """
 
-    user = ForeignKeyField(
-        User,
-        backref='password',
+    user_id = ForeignKeyField(
+        User, 
+        backref='auth_info', 
+        on_delete='CASCADE', 
         primary_key=True,
-        on_delete='CASCADE'
+        column_name='user_id'
     )
     password_hash = CharField()
+    role = CharField()
 
     class Meta:
         database = db
         table_name = 'passwords'
-
+        
     @classmethod
-    def create_password(cls, user: User, raw_password: str):
+    def create_password(cls, user_id: str, role: str, raw_password: str):
         """
         パスワードをハッシュ化して保存する。
 
         Args:
-            user (User): 対象ユーザー
+            user_id (str): 対象ユーザーの ID
+            role (str): ユーザーのロール (student/teacher/admin)
             raw_password (str): 平文パスワード
 
-        Returns:
-            Password: 作成された Password インスタンス
         """
-        return cls.create(
-            user=user,
-            password_hash=generate_password_hash(raw_password)
+        Password.create(
+            user_id=user_id,
+            password_hash=generate_password_hash(raw_password),
+            role=role
         )
 
     def verify_password(self, raw_password: str) -> bool:
@@ -55,3 +57,13 @@ class Password(Model):
             bool: 正しい場合 True
         """
         return check_password_hash(self.password_hash, raw_password)
+    
+    def update_password(self, raw_password: str):
+        """
+        ユーザーのパスワードを更新する。
+
+        Args:
+            raw_password (str): 新しい平文パスワード
+        """
+        self.password_hash = generate_password_hash(raw_password)
+        self.save()

@@ -1,14 +1,16 @@
-from .user import Credential, Student, Teacher
+from .student import Student
+from .teacher import Teacher
 from .password import Password
 from .subject import Subject
 from .grade import Grade
+from .user import User
 
 models = [
     Password,
-    Credential,
     Student,
     Teacher,
     Subject,
-    Grade
+    Grade,
+    User
 ]
 

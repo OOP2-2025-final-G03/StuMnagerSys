@@ -6,8 +6,8 @@ document.addEventListener("click", async (e) => {
 
   if (!confirm("本当に削除しますか？")) return;
 
-  const res = await fetch(`/api/users/${userId}`, {
-    method: "DELETE",
+  const res = await fetch(`/user/delete/${userId}`, {
+    method: "POST",
     headers: {
       "Authorization": "Bearer " + localStorage.getItem("token")
     }

@@ -10,7 +10,7 @@
     <div class="list-card">
         
         <div class="list-header">
-            <h2>{{ title }}</h2>
+            <h2>ユーザー管理</h2>
             <p>システムに登録されているユーザーを管理します。</p>
         </div>
 
@@ -42,8 +42,9 @@
                         {# --- カラムヘッダーの動的切り替え (専攻/学科) --- #}
                         <th>専攻 / 学科</th>
                         
-                        {# --- カラムヘッダーの動的切り替え (詳細情報) --- #}
-                        <th>年齢/生年月日</th>
+                        <th>生年月日</th>
+                        
+                        <th>性別</th>
 
                         <th width="140">操作</th>
                     </tr>
@@ -75,13 +76,13 @@
                                 {{ user.major if user.role == 'student' else user.department }}
                             </td>
                             
-                            {# --- 年齢/生年月日 の表示 --- #}
+                            {# --- 生年月日 の表示 --- #}
                             <td>
-                                {% if user.role == 'student' %}
-                                    <span style="color: #64748b;">{{ user.birth_date }}</span>
-                                {% else %}
-                                    <span style="color: #64748b;">{{ user.age }}歳</span>
-                                {% endif %}
+                                <span style="color: #64748b;">{{ user.birth_date }}</span>
+                            </td>
+                            {# --- 性別 の表示 --- #}
+                            <td>
+                                <span style="color: #64748b;">{{ user.gender }}</span>
                             </td>
                             
                             <td>

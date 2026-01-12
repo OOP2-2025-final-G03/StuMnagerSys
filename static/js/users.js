@@ -13,13 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
       name: document.getElementById("name").value,
       birth_date: document.getElementById("birth_date").value,
       role: document.getElementById("role").value,
+      gender: document.getElementById("gender").value,
       department: document.getElementById("department").value,
       password: document.getElementById("password").value
     };
 
     const url = mode === "edit"
-      ? `/users/${userId}/edit`
-      : `/users/create`;
+      ? `/user/${userId}/edit`
+      : `/user/create`;
 
     try {
       const res = await fetch(url, {
@@ -45,10 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
           : "ユーザーを登録しました";
 
       if (mode === "create") {
-        form.reset();
+        alert("ユーザーを登録しました");
+        window.location.href = "/user/list"; 
+      } else {
+        document.getElementById("message").textContent = "ユーザー情報を更新しました";
       }
-
     } catch (err) {
+      console.error(err);
       document.getElementById("message").textContent = err.message;
     }
   });
