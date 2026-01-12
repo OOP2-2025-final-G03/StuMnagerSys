@@ -1,60 +1,16 @@
-from peewee import (
-    Model,
-    CharField,
-    DateField,
-    IntegerField,
-    ForeignKeyField,
-    BooleanField
-)
-from flask_login import UserMixin
-from utils import db
+from peewee import *
+from .db import db
 
-
-class Credential(UserMixin, Model):
-    """
-    ユーザー認証情報を管理するモデル。
-    パスワードとユーザー識別を一元管理する。
-    """
-    user_id = CharField(primary_key=True)
-    password_hash = CharField()
-
-    class Meta:
-        database = db
-        table_name = 'credentials'
-
-    def get_id(self):
-        """
-        ユーザーの一意識別子を取得する。
-
-        Returns:
-            str: ユーザーID
-        """
-        return self.user_id
-    
-    def check_password(self, password_input):
-        """
-        入力されたパスワードとハッシュを比較する。
-
-        Args:
-            password_input (str): 入力されたパスワード
-
-        Returns:
-            bool: パスワードが一致する場合 True
-        """
-        return self.password_hash == password_input
-
-
-class Student(Model):
-    """
-    学生情報を管理するモデル。
-    """
-    student_id = CharField(primary_key=True)  # 学籍番号
+class User(Model):
+    user_id = CharField(unique=True)
     name = CharField()
-    birth_date = DateField()
-    gender = CharField()  # 'male' / 'female' / 'other'
-    major = CharField()  # 専攻
+    birth_date = DateField(null=True)
+    department = CharField(null=True)
 
     class Meta:
+<<<<<<< HEAD
+        database = db
+=======
         database = db
         table_name = 'students'
 
@@ -100,7 +56,6 @@ class Teacher(Model):
             "name": self.name,
             "age": self.age,
             "department": self.department,
-            "is_admin": self.is_admin,
         }
 
 
@@ -134,3 +89,4 @@ class User(Credential):
         return Credential.select()
     
 
+>>>>>>> a4f91b23361916b38a4e31635da66e4d029f1380

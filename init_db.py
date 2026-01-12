@@ -53,14 +53,12 @@ def init_database():
             'name': '鈴木教子',
             'age': 45,
             'department': '情報科学科',
-            'is_admin': False,
         },
         {
             'teacher_id': 'TEA002',
             'name': '田中校長',
             'age': 58,
             'department': '情報科学科',
-            'is_admin': True,  # 管理者権限あり
         }
     ]
     
@@ -75,18 +73,22 @@ def init_database():
         {
             'user_id': 'STU001',
             'password_hash': 'password123'
+            'role':'student'
         },
         {
             'user_id': 'STU002',
             'password_hash': 'password456'
+            'role':'student'
         },
         {
             'user_id': 'TEA001',
             'password_hash': 'teacher123'
+            'role':'teacher'
         },
         {
             'user_id': 'TEA002',
             'password_hash': 'admin123'
+            'role':'admin'
         }
     ]
     

@@ -28,6 +28,8 @@ class Config:
     # セッション設定
     SESSION_PERMANENT = False # セッションが期限切れになった後でも保持するかどうか
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=60) # セッションの有効期限（分）
+    # ログイン保持の期間
+    REMEMBER_COOKIE_DURATION = timedelta(days=1)
 
     # ユーザーロールと表示名のマッピング
     ROLE_TITLES = {
