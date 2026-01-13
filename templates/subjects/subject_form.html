@@ -137,15 +137,25 @@
         </select>
       </div>
 
-      <!-- 対象学年 -->
       <div class="form-group">
         <label>対象学年</label>
-        <select name="grade" required>
-          {% for g in [1,2,3,4] %}
-          <option value="{{ g }}" {{ 'selected' if subject and subject.grade == g }}>
-            {{ g }}年
-          </option>
-          {% endfor %}
+        <select name="grades" class="form-control">
+          {% set g_val = subject.grade|string if subject else "" %}
+          <option value="1" {{ 'selected' if g_val == '1' }}>1年生のみ</option>
+          <option value="2" {{ 'selected' if g_val == '2' }}>2年生のみ</option>
+          <option value="3" {{ 'selected' if g_val == '3' }}>3年生のみ</option>
+          <option value="4" {{ 'selected' if g_val == '4' }}>4年生のみ</option>
+          <option value="1,2" {{ 'selected' if g_val == '1,2' }}>1・2年生</option>
+          <option value="1,3" {{ 'selected' if g_val == '1,3' }}>1・3年生</option>
+          <option value="1,4" {{ 'selected' if g_val == '1,4' }}>1・4年生</option>
+          <option value="2,3" {{ 'selected' if g_val == '2,3' }}>2・3年生</option>
+          <option value="2,4" {{ 'selected' if g_val == '2,4' }}>1・4年生</option>
+          <option value="3,4" {{ 'selected' if g_val == '3,4' }}>3・4年生</option>
+          <option value="1,2,3" {{ 'selected' if g_val == '1,2,3' }}>1・2・3年生</option>
+          <option value="1,2,4" {{ 'selected' if g_val == '1,2,4' }}>1・2・4年生</option>
+          <option value="1,3,4" {{ 'selected' if g_val == '1,3,4' }}>1・3・4年生</option>
+          <option value="2,3,4" {{ 'selected' if g_val == '1,2,4' }}>2・3・4年生</option>
+          <option value="1,2,3,4" {{ 'selected' if g_val == '1,2,3,4' }}>全学年</option>
         </select>
       </div>
 
