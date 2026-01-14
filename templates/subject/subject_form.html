@@ -1,0 +1,197 @@
+{% extends active_template %}
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/user_list.css') }}"
+/>
+
+<style>
+  /* --- フォーム全体 --- */
+  .form-container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full {
+    grid-column: span 2;
+  }
+
+  .form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    font-size: 0.875rem;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-shadow);
+  }
+
+  /* --- フォーム下部ボタン --- */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .btn-cancel {
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-main);
+    border: 1px solid var(--input-border);
+  }
+
+  .btn-submit {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--primary-color);
+    color: var(--active-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-submit:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+  }
+</style>
+{% endblock %}
+
+{% block page_title %}
+{{ '科目新規登録' if mode == 'create' else '科目編集' }}
+{% endblock %}
+
+{% block main_content %}
+<div class="list-card form-container">
+  <div class="list-header">
+    <h2>{{ '科目新規登録' if mode == 'create' else '科目編集' }}</h2>
+    <p>科目情報を入力してください。</p>
+  </div>
+
+  <form method="post">
+    <div class="form-grid">
+      <!-- 科目名 -->
+      <div class="form-group full">
+        <label>科目名</label>
+        <input
+          type="text"
+          name="name"
+          value="{{ subject.name if subject else '' }}"
+          required
+        />
+      </div>
+
+      <!-- 専攻 -->
+      <div class="form-group">
+        <label>専攻</label>
+        <input
+          type="text"
+          name="major"
+          value="{{ subject.major if subject else '' }}"
+          required
+        />
+      </div>
+
+      <!-- 単位区分 -->
+      <div class="form-group">
+        <label>単位区分</label>
+        <select name="category" required>
+          <option value="required" {{ 'selected' if subject and subject.category == 'required' }}>
+            必修
+          </option>
+          <option value="elective" {{ 'selected' if subject and subject.category == 'elective' }}>
+            選択
+          </option>
+        </select>
+      </div>
+      <!-- 対象学年 -->
+      <div class="form-group">
+        <label>対象学年</label>
+        <select name="grade" required>
+          {% for g in [1,2,3,4] %}
+          <option value="{{ g }}" {{ 'selected' if subject and subject.grade == g }}>
+            {{ g }}年
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 単位数 -->
+      <div class="form-group">
+        <label>単位数</label>
+        <input
+          type="number"
+          name="credits"
+          min="1"
+          value="{{ subject.credits if subject else '' }}"
+          required
+        />
+      </div>
+
+      <!-- 曜日 + 時間 -->
+<div class="form-group">
+  <label>曜日</label>
+  <select name="day" required>
+    {% for d in ['月','火','水','木','金'] %}
+    <option value="{{ d }}" {{ 'selected' if subject and subject.day == d }}>
+      {{ d }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+
+<div class="form-group">
+  <label>時間</label>
+  <select name="period" required>
+    {% for p in range(1, 7) %}
+    <option value="{{ p }}" {{ 'selected' if subject and subject.period == p }}>
+      {{ p }}限
+    </option>
+    {% endfor %}
+  </select>
+</div>
+
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('subject.list') }}" class="btn-cancel">
+        キャンセル
+      </a>
+      <button type="submit" class="btn-submit">
+        {{ '登録' if mode == 'create' else '更新' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
