@@ -7,7 +7,6 @@ from utils.db import db
 from models import Password, Student, Teacher, Subject, Grade, User
 from datetime import date
 
-
 def init_database():
     """データベーステーブルの作成とテストデータの挿入"""
     

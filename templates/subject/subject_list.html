@@ -5,7 +5,7 @@
 />
 
 <style>
-  /* 科目の種類を示すバッジ */
+  /* --- ご提示のスタイルを完全に維持 --- */
   .category {
     display: inline-block;
     padding: 2px 8px;
@@ -13,8 +13,6 @@
     font-size: 0.75rem;
     font-weight: 500;
   }
-
-  /* 必修科目: 橙色/黄色 */
   .category-required {
     background-color: rgba(249, 115, 22, 0.1);
     color: #c2410c;
@@ -22,8 +20,6 @@
   [data-theme="dark"] .category-required {
     color: #fb923c;
   }
-
-  /* 選択科目: 蓝色 */
   .category-elective {
     background-color: rgba(14, 165, 233, 0.1);
     color: #0284c7;
@@ -31,60 +27,120 @@
   [data-theme="dark"] .category-elective {
     color: #38bdf8;
   }
-
   .credit-num {
     font-weight: 600;
     color: var(--text-main);
   }
 
+  /* --- 修正後 --- */
+  .list-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  /* もし画面全体が動かない場合はこちらも確認 */
+  html,
+  body {
+    overflow-y: auto !important;
+    height: auto !important;
+  }
+
+  .list-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+  }
   .search-box {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
   }
-
   .search-box input {
     height: 36px;
-    padding: 0 12px;
+    padding: 0 10px;
     border-radius: 6px;
     border: 1px solid var(--border-color);
-    min-width: 240px;
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .btn-search {
+    flex-shrink: 1;
+    white-space: normal;
+    padding: 0 10px;
     appearance: none;
-    outline: none;
     cursor: pointer;
-
     height: 36px;
-    padding: 0 14px;
     font-size: 13px;
     font-weight: 600;
-
     color: #ffffff;
     background-color: var(--primary-color);
     border-radius: 8px;
     border: none;
-
-    box-shadow: var(--shadow-sm);
+  }
+  .btn-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    min-height: 36px;
+    padding: 8px 16px;
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+    flex-shrink: 1;
+    max-width: 100%;
+    box-sizing: border-box;
     transition: all var(--anim-fast);
-
-    writing-mode: horizontal-tb;
-    white-space: nowrap;
-    line-height: 1;
   }
 
-  /* hover */
-  .btn-search:hover {
-    background-color: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(26, 26, 26, 0.25);
+  /* 履修管理ボタン用スタイル追加 */
+  .btn-manage {
+    background-color: #6366f1;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 4px;
   }
 
-  /* active */
-  .btn-search:active {
-    transform: translateY(0) scale(0.98);
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+  @media (max-width: 500px) {
+    .list-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .btn-add {
+      order: -1;
+      width: 100%;
+    }
+    .search-box {
+      width: 100%;
+    }
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 </style>
 {% endblock %} {% block page_title %}科目管理{% endblock %} {% block
@@ -98,23 +154,20 @@ main_content %}
   {% set current_category = request.args.get('category', 'all') %}
   <div class="filter-tabs">
     <a
-      href="{{ url_for('subject.subject_list', category='all') }}"
+      href="{{ url_for('subject.list', category='all', role=role) }}"
       class="filter-tab {{ 'active' if current_category == 'all' else '' }}"
+      >すべて</a
     >
-      すべて
-    </a>
     <a
-      href="{{ url_for('subject.subject_list', category='required') }}"
+      href="{{ url_for('subject.list', category='required', role=role) }}"
       class="filter-tab {{ 'active' if current_category == 'required' else '' }}"
+      >必修科目</a
     >
-      必修科目
-    </a>
     <a
-      href="{{ url_for('subject.subject_list', category='elective') }}"
+      href="{{ url_for('subject.list', category='elective', role=role) }}"
       class="filter-tab {{ 'active' if current_category == 'elective' else '' }}"
+      >選択科目</a
     >
-      選択科目
-    </a>
   </div>
 
   <div class="list-actions">
@@ -123,18 +176,17 @@ main_content %}
       action="{{ url_for('subject.subject_list') }}"
       class="search-box"
     >
+      <input type="hidden" name="role" value="{{ role }}" />
       <input
         type="text"
         name="keyword"
         placeholder="科目名・専攻で検索..."
         value="{{ request.args.get('keyword', '') }}"
       />
-
       <button type="submit" class="btn-search">検索</button>
     </form>
-
     {% if role in ['admin', 'teacher'] %}
-    <a href="{{ url_for('subject.create') }}" class="btn-add"> 新規科目 </a>
+    <a href="{{ url_for('subject.create') }}" class="btn-add">新規科目</a>
     {% endif %}
   </div>
 
@@ -142,59 +194,52 @@ main_content %}
     <table class="styled-table">
       <thead>
         <tr>
-          <th width="80">ID</th>
+          <th>ID</th>
           <th>科目名</th>
           <th>専攻</th>
           <th>区分</th>
           <th>対象学年</th>
           <th>単位数</th>
           <th>開講日時</th>
-          <th width="160">操作</th>
+          <th>操作</th>
         </tr>
       </thead>
       <tbody>
         {% if subjects|length > 0 %} {% for sub in subjects %}
         <tr>
           <td style="font-family: monospace">{{ sub.id }}</td>
-
           <td style="font-weight: 500; color: var(--text-main)">
             {{ sub.name }}
           </td>
-
           <td>{{ sub.major }}</td>
-
           <td>
             <span
               class="category {{ 'category-required' if sub.category == 'required' else 'category-elective' }}"
+              >{{ '必修' if sub.category == 'required' else '選択' }}</span
             >
-              {{ '必修' if sub.category == 'required' else '選択' }}
-            </span>
           </td>
-
           <td>{{ sub.grade }} 年</td>
-
           <td><span class="credit-num">{{ sub.credits }}</span> 単位</td>
-
           <td>{{ sub.day }} {{ sub.period }}限</td>
-
           <td>
-            {% if role in ['admin', 'teacher'] %}
             <div class="action-buttons">
+              <a
+                href="{{ url_for('subject.manage', subject_id=sub.id, role=role) }}"
+                class="btn-manage"
+                >履修管理</a
+              >
               <a
                 href="{{ url_for('subject.edit', subject_id=sub.id) }}"
                 class="action-link edit-link"
+                >編集</a
               >
-                編集
-              </a>
               <a
                 href="{{ url_for('subject.delete', subject_id=sub.id) }}"
                 class="action-link delete-link"
                 onclick="return confirm('本当に削除しますか？');"
+                >削除</a
               >
-                削除
-              </a>
             </div>
-            {% else %} - {% endif %}
           </td>
         </tr>
         {% endfor %} {% else %}
