@@ -29,6 +29,12 @@ class Config:
     SESSION_PERMANENT = False # セッションが期限切れになった後でも保持するかどうか
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=60) # セッションの有効期限（分）
 
+    # Remember Me機能の設定
+    REMEMBER_COOKIE_DURATION = timedelta(days=7)  # Remember Meクッキーの有効期間（7日間）
+    REMEMBER_COOKIE_SECURE = False  # 本番環境ではTrue推奨（HTTPS環境でのみ送信）
+    REMEMBER_COOKIE_HTTPONLY = True  # JavaScriptからアクセス不可
+    REMEMBER_COOKIE_SAMESITE = 'Lax'  # CSRF対策
+
     # ユーザーロールと表示名のマッピング
     ROLE_TITLES = {
         'student': '学生',
