@@ -57,7 +57,7 @@
                             <option value="">学籍番号を選択してください</option>
                             {% for s in students %}
                                 <option value="{{ s.student_id }}"
-                                        {{ 'selected' if selected_student == s.student_id else '' }}>
+                                        {{ 'selected' if selected_student == (s.student_id|string) else '' }}>
                                     {{ s.student_id }}{% if s.name %}（{{ s.name }}）{% endif %}
                                 </option>
                             {% endfor %}
@@ -67,12 +67,23 @@
 
                 <!-- 科目ID -->
                 <div class="search-box" style="flex: 1; max-width: none;">
-                    <input type="number"
-                           name="subject_id"
-                           min="0"
-                           placeholder="科目ID（例: 12）"
-                           {% if mode == 'edit' and grade is defined %}readonly{% endif %}
-                           value="{% if grade is defined %}{{ grade.subject_id }}{% else %}{{ request.form.get('subject_id','') }}{% endif %}">
+                    {% if mode == 'edit' and grade is defined %}
+                        <input type="number"
+                               name="subject_id"
+                               readonly
+                               value="{{ grade.subject_id }}">
+                    {% else %}
+                        {% set selected_subject = request.form.get('subject_id', '') %}
+                        <select name="subject_id" required style="width:100%; min-height: 38px;">
+                            <option value="">科目を選択してください</option>
+                            {% for sub in subjects %}
+                                <option value="{{ sub.id }}"
+                                        {{ 'selected' if selected_subject == (sub.id|string) else '' }}>
+                                    {{ sub.id }}: {{ sub.name }}（{{ sub.credits }}単位）
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
                 </div>
             </div>
 

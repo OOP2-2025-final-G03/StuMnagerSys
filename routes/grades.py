@@ -6,7 +6,7 @@ from peewee import DoesNotExist
 from utils import Config
 from models import Grade
 from models import Subject  # 科目名検索用
-from models import Student, User  # ★追加：生徒一覧取得に使う
+from models import Student, User  # ★追加：生徒一覧取得用
 
 # /grades/... に統一
 grade_bp = Blueprint('grade', __name__, url_prefix='/grade')
@@ -39,7 +39,7 @@ def capture_role_type(endpoint, values):
 def add_role_type(endpoint, values):
     """
     url_for('grade.xxx', ...) のとき role_type が渡されていなければ、
-    現在のリクエストの role_type を自動で補う。
+    現在のリクエストの role_type を自動で補う（= 方法B）。
     """
     if not endpoint.startswith('grade.'):
         return
@@ -76,14 +76,13 @@ def require_roles(*allowed_roles):
     return deco
 
 
-# どのroleが「編集系」可能か（存在するものだけ許可）
 _EDIT_ROLES = [r for r in ('admin', 'teacher') if r in Config.ROLE_TITLES]
 if not _EDIT_ROLES:
     _EDIT_ROLES = list(Config.ROLE_TITLES.keys())
 
 
 # -----------------------------
-# ルーティング（/grade/<role_type>/...）
+# ルーティング（/grades/<role_type>/...）
 # -----------------------------
 
 @grade_bp.route('/<role_type>/list')
@@ -95,11 +94,9 @@ def grade_list(role_type):
 
     query = Grade.select()
 
-    # 学籍番号で検索（部分一致）
     if student_number:
         query = query.where(Grade.student_id.contains(student_number))
 
-    # 科目ID or 科目名で検索
     if subject:
         if subject.isdigit():
             query = query.where(Grade.subject_id == int(subject))
@@ -112,7 +109,6 @@ def grade_list(role_type):
             else:
                 query = query.where(Grade.subject_id == -1)
 
-    # 合格/不合格フィルタ（点数で判定）
     if current_filter == 'pass':
         query = query.where(Grade.score >= 60)
     elif current_filter == 'fail':
@@ -132,8 +128,7 @@ def grade_list(role_type):
 @grade_bp.route('/<role_type>/create', methods=['GET', 'POST'])
 @require_roles(*_EDIT_ROLES)
 def create(role_type):
-    # ★生徒一覧を Student から取得（User と JOIN して user_id で並び替え）
-    # Student.student_id は User への FK なので、st.student_id.user_id が学籍番号
+    # ★生徒一覧（Student + User）を作る：valueは user_id（=学籍番号）
     student_rows = (
         Student
         .select(Student, User)
@@ -141,12 +136,10 @@ def create(role_type):
         .where(User.role == 'student')
         .order_by(User.user_id.asc())
     )
+    students = [{"student_id": st.student_id.user_id, "name": st.name} for st in student_rows]
 
-    # ★テンプレで扱いやすいよう dict 化（Jinjaでは s.student_id で参照できる）
-    students = [
-        {"student_id": st.student_id.user_id, "name": st.name}
-        for st in student_rows
-    ]
+    # ★科目一覧
+    subjects = list(Subject.select().order_by(Subject.id.asc()))
 
     if request.method == 'POST':
         student_number = (request.form.get('student_number') or '').strip()
@@ -163,11 +156,12 @@ def create(role_type):
                 active_template='content_base.html',
                 role=role_type,
                 role_type=role_type,
-                students=students,  # ★必ず渡す
+                students=students,
+                subjects=subjects,
             )
 
-        if not (subject_id_raw.isdigit() and unit_raw.isdigit() and score_raw.isdigit()):
-            flash('科目ID / 単位 / 点数 は数字で入力してください。', 'error')
+        if not subject_id_raw.isdigit():
+            flash('科目を選択してください。', 'error')
             return render_template(
                 'grades/grade_form.html',
                 title='成績登録',
@@ -175,7 +169,21 @@ def create(role_type):
                 active_template='content_base.html',
                 role=role_type,
                 role_type=role_type,
-                students=students,  # ★必ず渡す
+                students=students,
+                subjects=subjects,
+            )
+
+        if not (unit_raw.isdigit() and score_raw.isdigit()):
+            flash('単位 / 点数 は数字で入力してください。', 'error')
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_template='content_base.html',
+                role=role_type,
+                role_type=role_type,
+                students=students,
+                subjects=subjects,
             )
 
         subject_id = int(subject_id_raw)
@@ -191,7 +199,8 @@ def create(role_type):
                 active_template='content_base.html',
                 role=role_type,
                 role_type=role_type,
-                students=students,  # ★必ず渡す
+                students=students,
+                subjects=subjects,
             )
 
         if not (0 <= score <= 100):
@@ -203,7 +212,8 @@ def create(role_type):
                 active_template='content_base.html',
                 role=role_type,
                 role_type=role_type,
-                students=students,  # ★必ず渡す
+                students=students,
+                subjects=subjects,
             )
 
         exists = Grade.select().where(
@@ -218,7 +228,6 @@ def create(role_type):
         flash('成績を登録しました。', 'success')
         return redirect(url_for('grade.grade_list'))
 
-    # ★GETでも students を必ず渡す
     return render_template(
         'grades/grade_form.html',
         title='成績登録',
@@ -226,7 +235,8 @@ def create(role_type):
         active_template='content_base.html',
         role=role_type,
         role_type=role_type,
-        students=students,  # ★必ず渡す
+        students=students,
+        subjects=subjects,
     )
 
 
@@ -239,7 +249,7 @@ def edit(role_type, student_number, subject_id):
         )
     except DoesNotExist:
         flash('対象の成績が見つかりませんでした。', 'error')
-        return redirect(url_for('grade.grade_list'))  # ★grade.list → grade.grade_list に修正
+        return redirect(url_for('grade.grade_list'))  # ★修正
 
     if request.method == 'POST':
         unit_raw = (request.form.get('unit') or '').strip()
@@ -307,7 +317,7 @@ def edit(role_type, student_number, subject_id):
 def delete(role_type, student_number, subject_id):
     try:
         grade = Grade.get(
-            (Grade.student_id == student_number) &   # ★student_number → student_id に修正
+            (Grade.student_id == student_number) &  # ★修正（student_number → student_id）
             (Grade.subject_id == subject_id)
         )
         grade.delete_instance()
@@ -315,4 +325,4 @@ def delete(role_type, student_number, subject_id):
     except DoesNotExist:
         flash('対象の成績が見つかりませんでした。', 'error')
 
-    return redirect(url_for('grade.grade_list'))  # ★grade.list → grade.grade_list に修正
+    return redirect(url_for('grade.grade_list'))  # ★修正
