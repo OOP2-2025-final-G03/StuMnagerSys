@@ -4,7 +4,8 @@ from flask_login import current_user
 
 def role_required(*roles):
     """
-    指定された権限を持つユーザーのみアクセス可能にする
+    指定された権限（student / teacher / admin）を
+    持つユーザーのみアクセス可能にする
     """
 
     def decorator(fn):
