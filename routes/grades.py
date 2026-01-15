@@ -1,11 +1,11 @@
 from functools import wraps
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, g
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, g, jsonify
 from peewee import DoesNotExist
 from flask_login import login_required, current_user
 
 from utils import Config
-from models import Grade, Subject, Student, User
+from models import Grade, Subject, Student, User, Enrollment  # ★Enrollmentを追加
 
 
 # /grade/... に統一
@@ -97,13 +97,15 @@ def grade_list(role_type):
     if current_user.role != 'admin' and current_user.role != role_type:
         abort(403)
 
+    # 「生徒画面かどうか」は URL ではなくログインユーザーで判定
+    is_student_view = (current_user.role == 'student')
+
     current_filter = request.args.get('filter', 'all')
     subject = (request.args.get('subject') or '').strip()
 
     query = Grade.select()
 
-    if role_type == 'student':
-        # ★生徒は自分の学籍番号に固定
+    if is_student_view:
         query = query.where(Grade.student_id == current_user.get_id())
     else:
         student_number = (request.args.get('student_number') or '').strip()
@@ -123,21 +125,71 @@ def grade_list(role_type):
             else:
                 query = query.where(Grade.subject_id == -1)
 
-    # 合格/不合格フィルタ（点数で判定）
+    # 合格/不合格フィルタ
     if current_filter == 'pass':
         query = query.where(Grade.score >= 60)
     elif current_filter == 'fail':
         query = query.where(Grade.score < 60)
 
     query = query.order_by(Grade.student_id.asc(), Grade.subject_id.asc())
+    grade_items = list(query)
+
+    subject_map = {s.id: s.name for s in Subject.select(Subject.id, Subject.name)}
+
+    student_name_map = {}
+    if not is_student_view:
+        student_ids = sorted({g.student_id for g in grade_items})
+        if student_ids:
+            rows = (
+                Student
+                .select(Student, User)
+                .join(User)
+                .where(User.user_id.in_(student_ids))
+            )
+            student_name_map = {st.student_id.user_id: st.name for st in rows}
 
     return render_template(
         'grades/grade_list.html',
         title='成績一覧',
-        items=query,
+        items=grade_items,
         active_template=f'dashboard/{role_type}.html',
         active_page='grades',
+        subject_map=subject_map,
+        student_name_map=student_name_map,
+        is_student_view=is_student_view,
     )
+
+
+# -----------------------------
+# ★履修科目取得（AJAX用）
+#   /grade/<role_type>/enrolled_subjects/<student_number>
+# -----------------------------
+
+@grade_bp.route('/<role_type>/enrolled_subjects/<student_number>')
+@login_required
+@require_roles(*_EDIT_ROLES)
+def enrolled_subjects(role_type, student_number):
+    # admin 以外は URLのrole_type と自分のroleを一致させる（teacherがadmin側URLを叩けないように）
+    if current_user.role != 'admin' and current_user.role != role_type:
+        abort(403)
+
+    rows = (
+        Enrollment
+        .select(Enrollment, Subject)
+        .join(Subject)
+        .where(Enrollment.student_id == student_number)
+        .order_by(Subject.id.asc())
+    )
+
+    data = []
+    for e in rows:
+        data.append({
+            "id": e.subject.id,
+            "name": e.subject.name,
+            "credits": e.subject.credits,
+        })
+
+    return jsonify(data)
 
 
 # -----------------------------
@@ -158,13 +210,12 @@ def create(role_type):
     )
     students = [{"student_id": st.student_id.user_id, "name": st.name} for st in student_rows]
 
-    # 科目一覧
-    subjects = list(Subject.select().order_by(Subject.id.asc()))
+    # ★科目は「学籍番号選択後にAJAXで取得」するので、初期は空でOK
+    subjects = []
 
     if request.method == 'POST':
         student_number = (request.form.get('student_number') or '').strip()
         subject_id_raw = (request.form.get('subject_id') or '').strip()
-        unit_raw = (request.form.get('unit') or '').strip()
         score_raw = (request.form.get('score') or '').strip()
 
         if not student_number:
@@ -193,8 +244,8 @@ def create(role_type):
                 subjects=subjects,
             )
 
-        if not (unit_raw.isdigit() and score_raw.isdigit()):
-            flash('単位 / 点数 は数字で入力してください。', 'error')
+        if not score_raw.isdigit():
+            flash('点数は数字で入力してください。', 'error')
             return render_template(
                 'grades/grade_form.html',
                 title='成績登録',
@@ -207,21 +258,7 @@ def create(role_type):
             )
 
         subject_id = int(subject_id_raw)
-        unit = int(unit_raw)
         score = int(score_raw)
-
-        if unit < 0:
-            flash('単位は0以上で入力してください。', 'error')
-            return render_template(
-                'grades/grade_form.html',
-                title='成績登録',
-                mode='create',
-                active_template='content_base.html',
-                role=role_type,
-                role_type=role_type,
-                students=students,
-                subjects=subjects,
-            )
 
         if not (0 <= score <= 100):
             flash('点数は0〜100で入力してください。', 'error')
@@ -235,6 +272,42 @@ def create(role_type):
                 students=students,
                 subjects=subjects,
             )
+
+        # ★この学生が本当に履修している科目かチェック（Enrollmentで検証）
+        is_enrolled = Enrollment.select().where(
+            (Enrollment.student_id == student_number) &
+            (Enrollment.subject == subject_id)
+        ).exists()
+        if not is_enrolled:
+            flash('この学生は選択した科目を履修していません。', 'error')
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_template='content_base.html',
+                role=role_type,
+                role_type=role_type,
+                students=students,
+                subjects=subjects,
+            )
+
+        # ★単位は科目マスタから自動確定（JSの入力は信用しない）
+        try:
+            sub = Subject.get_by_id(subject_id)
+        except DoesNotExist:
+            flash('選択した科目が存在しません。', 'error')
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_template='content_base.html',
+                role=role_type,
+                role_type=role_type,
+                students=students,
+                subjects=subjects,
+            )
+
+        unit = int(sub.credits)
 
         exists = Grade.select().where(
             (Grade.student_id == student_number) &
