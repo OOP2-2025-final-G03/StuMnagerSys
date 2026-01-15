@@ -26,13 +26,13 @@ def login():
 
     password = Password.get_or_none(Password.user_id == user_id)
     if not password or not password.verify_password(raw_password):
-        flash("ID またはパスワードが違います")
-        return redirect(url_for("auth.login_page"), title="学生管理システム")
+        flash("*ID またはパスワードが違います")
+        return redirect(url_for("auth.login_page"))
 
     user = User.get_or_none(User.user_id == user_id)
     if not user:
-        flash("ユーザー情報が存在しません")
-        return redirect(url_for("auth.login_page"), title="学生管理システム")
+        flash("*ユーザー情報が存在しません")
+        return redirect(url_for("auth.login_page"))
     print(remember)
 
     login_user(user, remember=remember)
@@ -42,8 +42,8 @@ def login():
         return redirect(url_for('dashboard'))
     
     # ロールが一致しない場合はログイン画面に戻る
-    flash("ロールが一致しません")
-    return redirect(url_for("auth.login_page"), title="学生管理システム")
+    flash("*ロールが一致しません")
+    return redirect(url_for("auth.login_page"))
 
 # ログイン画面表示
 @auth_bp.route('/login', methods=['GET'])

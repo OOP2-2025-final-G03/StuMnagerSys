@@ -64,7 +64,7 @@ def create():
     
     if request.method == 'POST':
         # ★ HTMLの name="grades" を getlist で取得してカンマ区切りにする
-        grade_list = request.form.getlist('grades')
+        grade_list = request.form.getlist('grade')
         grade_str = ",".join(grade_list)
 
         name = request.form['name']

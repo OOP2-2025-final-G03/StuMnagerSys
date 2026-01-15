@@ -18,7 +18,6 @@ for bp in blueprints:
         
 @app.context_processor
 def inject_user():
-    print(current_user.profile_dict())
     if current_user.profile_dict():
         return dict(
             user_name=current_user.profile_dict().get('name', 'ユーザー'),
