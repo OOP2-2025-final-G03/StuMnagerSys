@@ -179,7 +179,7 @@ main_content %}
       />
       <button type="submit" class="btn-search">検索</button>
     </form>
-    {% if role in ['admin', 'teacher'] %}
+    {% if user_role in ['admin', 'teacher'] %}
     <a href="{{ url_for('subject.create', role=role) }}" class="btn-add"
       >新規科目</a
     >
