@@ -16,8 +16,8 @@
 {% block page_title %}成績管理{% endblock %}
 
 {% block main_content %}
-    {# 生徒画面判定（Flask-Loginのcurrent_userを利用） #}
-    {% set is_student_view = (current_user.is_authenticated and current_user.role == 'student') %}
+    {# grades.py から渡される is_student_view があれば優先。無ければ従来通り current_user で判定 #}
+    {% set is_student_view = is_student_view if is_student_view is defined else (current_user.is_authenticated and current_user.role == 'student') %}
 
     <div class="list-card">
 
@@ -41,29 +41,19 @@
                 <a href="{{ url_for('grade.grade_list', filter='fail', subject=current_subject) }}"
                    class="filter-tab {{ 'active' if current_filter == 'fail' else '' }}">不合格</a>
             {% else %}
-                <a href="{{ url_for('grade.grade_list',
-                                    filter='all',
-                                    student_number=current_student_number,
-                                    subject=current_subject) }}"
+                <a href="{{ url_for('grade.grade_list', filter='all', student_number=current_student_number, subject=current_subject) }}"
                    class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
 
-                <a href="{{ url_for('grade.grade_list',
-                                    filter='pass',
-                                    student_number=current_student_number,
-                                    subject=current_subject) }}"
+                <a href="{{ url_for('grade.grade_list', filter='pass', student_number=current_student_number, subject=current_subject) }}"
                    class="filter-tab {{ 'active' if current_filter == 'pass' else '' }}">合格</a>
 
-                <a href="{{ url_for('grade.grade_list',
-                                    filter='fail',
-                                    student_number=current_student_number,
-                                    subject=current_subject) }}"
+                <a href="{{ url_for('grade.grade_list', filter='fail', student_number=current_student_number, subject=current_subject) }}"
                    class="filter-tab {{ 'active' if current_filter == 'fail' else '' }}">不合格</a>
             {% endif %}
         </div>
 
         <div class="list-actions">
             <div class="search-box" style="max-width: none;">
-                <!-- 1フォームに2入力 + ボタン：Enterでも検索できる -->
                 <form method="GET" action="{{ url_for('grade.grade_list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
                     {% if not is_student_view %}
                         <input type="text"
@@ -115,8 +105,11 @@
             <table class="styled-table">
                 <thead>
                     <tr>
-                        <th width="140">学籍番号</th>
-                        <th width="90">科目ID</th>
+                        {% if not is_student_view %}
+                            <th width="140">学籍番号</th>
+                            <th width="160">氏名</th>
+                        {% endif %}
+                        <th>科目（科目ID）</th>
                         <th width="80">単位</th>
                         <th width="110">評価（0〜4）</th>
                         <th>ステータス</th>
@@ -125,16 +118,28 @@
                         {% endif %}
                     </tr>
                 </thead>
+
                 <tbody>
                     {% set grade_items = items if items is defined else grades %}
                     {% if grade_items and grade_items|length > 0 %}
                         {% for g in grade_items %}
                         <tr>
-                            <td style="font-family: monospace;">{{ g.student_id }}</td>
-                            <td style="font-family: monospace;">{{ g.subject_id }}</td>
-                            <td>{{ g.unit }}</td>
+                            {% if not is_student_view %}
+                                <td style="font-family: monospace;">{{ g.student_id }}</td>
+                                <td>{{ student_name_map.get(g.student_id, '') }}</td>
+                            {% endif %}
 
-                            <!-- 0-100 を 0-4 に変換して表示 -->
+                            {# 科目名（科目ID）表示 #}
+                            {% set sub_name = subject_map.get(g.subject_id) if subject_map is defined else None %}
+                            <td>
+                                {% if sub_name %}
+                                    {{ sub_name }}（{{ g.subject_id }}）
+                                {% else %}
+                                    {{ g.subject_id }}
+                                {% endif %}
+                            </td>
+
+                            <td>{{ g.unit }}</td>
                             <td>{{ score_to_rank(g.score) }}</td>
 
                             <td>
@@ -174,7 +179,7 @@
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="{{ 5 if is_student_view else 6 }}" style="text-align: center; padding: 40px; color: #94a3b8;">
+                            <td colspan="{{ 4 if is_student_view else 7 }}" style="text-align: center; padding: 40px; color: #94a3b8;">
                                 データが見つかりませんでした。
                             </td>
                         </tr>
