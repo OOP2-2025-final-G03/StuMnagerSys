@@ -44,14 +44,28 @@
             </div>
 
             <div class="list-actions" style="margin-top: 14px; align-items: stretch;">
+                <!-- 学籍番号 -->
                 <div class="search-box" style="flex: 1; max-width: none;">
-                    <input type="text"
-                           name="student_number"
-                           placeholder="学籍番号（例: K24039）"
-                           {% if mode == 'edit' and grade is defined %}readonly{% endif %}
-                           value="{% if grade is defined %}{{ grade.student_id }}{% else %}{{ request.form.get('student_id','') }}{% endif %}">
+                    {% if mode == 'edit' and grade is defined %}
+                        <input type="text"
+                               name="student_number"
+                               readonly
+                               value="{{ grade.student_id }}">
+                    {% else %}
+                        {% set selected_student = request.form.get('student_number', '') %}
+                        <select name="student_number" required style="width:100%; min-height: 38px;">
+                            <option value="">学籍番号を選択してください</option>
+                            {% for s in students %}
+                                <option value="{{ s.student_id }}"
+                                        {{ 'selected' if selected_student == s.student_id else '' }}>
+                                    {{ s.student_id }}{% if s.name %}（{{ s.name }}）{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
                 </div>
 
+                <!-- 科目ID -->
                 <div class="search-box" style="flex: 1; max-width: none;">
                     <input type="number"
                            name="subject_id"
