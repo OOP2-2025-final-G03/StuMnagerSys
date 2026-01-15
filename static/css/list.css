@@ -298,3 +298,47 @@
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
+
+/* ==============================
+   検索フォーム（共通）
+============================== */
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 検索入力欄 */
+.search-form input[type="text"] {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    min-width: 220px;
+    background-color: #ffffff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* フォーカス時 */
+.search-form input[type="text"]:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* ==============================
+   検索ボタン
+============================== */
+.search-form button {
+    height: 40px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 8px;
+    background-color: #000000;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}

@@ -22,9 +22,17 @@
         </div>
 
         <div class="list-actions">
-            <div class="search-box">
-                <input type="text" placeholder="名前、ID、所属で検索...">
-            </div>
+            <form method="get" action="{{ url_for('user.user_search') }}" class="search-form">
+                <input
+                    type="text"
+                    name="keyword"
+                    placeholder="名前 または ID"
+                    value="{{ request.args.get('keyword', '') }}"
+                >
+                <button type="submit">検索</button>
+            </form>
+
+
             <a href="{{ url_for('user.new_user_form') }}" class="btn-add">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                 新規登録

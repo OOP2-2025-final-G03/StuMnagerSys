@@ -4,6 +4,7 @@ from models import Password, initialize_database
 from utils.config import Config
 from routes import blueprints
 from routes.auth import login_manager
+from utils.auth import load_current_user
 
 
 app = Flask(__name__)
@@ -13,6 +14,10 @@ login_manager.login_view = 'auth.login_page'
 
 for bp in blueprints:
     app.register_blueprint(bp)
+# 全リクエストで g.current_user が使える様にする。
+@app.before_request
+def before_request():
+    load_current_user()
 
 @app.route('/')
 def index():
