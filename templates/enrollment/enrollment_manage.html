@@ -99,23 +99,23 @@
           margin-bottom: 15px;
         "
       >
-        {% for student in all_students %}
-        {# --- ★ 複数学年対応の判定ロジック --- #} 
-        {% set target_grade_list = subject.grade|string %} 
-        {% set is_grade_ok = student.grade|string in target_grade_list.split(',') %} 
-        {% set grade_diff = not is_grade_ok %} 
-        {% set major_diff = (subject.major != 'all' and student.major != subject.major) %} 
-        {% set is_invalid = grade_diff or major_diff %}
+        {% for student in all_students %} {# --- ★ 複数学年対応の判定ロジック
+        --- #} {% set target_grade_list = subject.grade|string %} {% set
+        is_grade_ok = student.grade|string in target_grade_list.split(',') %} {%
+        set grade_diff = not is_grade_ok %} {% set major_diff = (subject.major
+        != 'all' and student.major != subject.major) %} {% set is_invalid =
+        grade_diff or major_diff %}
 
         <label
           style="display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid var(--border-color); 
                       {{ 'opacity: 0.5; cursor: not-allowed; background: #f9f9f9;' if is_invalid else 'cursor: pointer;' }}"
         >
-          <input type="checkbox" name="student_ids" value="{{ student.student_id }}" {{ 'disabled' if is_invalid }}>
+          <input type="checkbox" name="student_ids" value="{{ student.student_id
+          }}" {{ 'disabled' if is_invalid }}>
 
           <span style="font-size: 0.875rem; {{ 'color: #999;' if is_invalid }}">
-            [{{ student.grade }}年{{ student.major }}] {{ student.student_id }} :
-            {{ student.name }} {% if is_invalid %}
+            [{{ student.grade }}年{{ student.major }}] {{ student.student_id }}
+            : {{ student.name }} {% if is_invalid %}
             <small style="color: #ef4444; margin-left: 5px; font-weight: bold">
               ({% if grade_diff %}学年{% endif %}{% if grade_diff and major_diff
               %}&{% endif %}{% if major_diff %}専攻{% endif %}対象外)
@@ -129,7 +129,7 @@
       <div class="manage-actions">
         <button
           type="submit"
-          formaction="{{ url_for('enrollment.create') }}"
+          formaction="{{ url_for('enrollments.create') }}"
           class="btn-search"
           style="
             flex: 1;
@@ -145,7 +145,7 @@
         </button>
         <button
           type="submit"
-          formaction="{{ url_for('enrollment.delete_bulk_by_id') }}"
+          formaction="{{ url_for('enrollments.delete_bulk_by_id') }}"
           class="btn-search"
           style="
             flex: 1;
