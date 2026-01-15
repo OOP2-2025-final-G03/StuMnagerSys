@@ -7,7 +7,7 @@ from utils import role_required
 users_bp = Blueprint('user', __name__, url_prefix='/user')
 
 @users_bp.route('/list')
-@role_required('admin')
+@role_required('admin', 'teacher')
 @login_required
 def user_list():
     """
@@ -23,7 +23,7 @@ def user_list():
         role_title = '学生'
         students = Student.select()
         users = [dict(s.to_dict(), role='student') for s in students]
-    elif filter_role == "teacher":
+    elif filter_role == "teacher" and current_user.role == 'admin':
         role_title = '教員  '
         teachers = Teacher.select()
         users = [dict(t.to_dict(), role='teacher') for t in teachers]
@@ -31,8 +31,9 @@ def user_list():
         role_title = '全体'
         students = Student.select()
         users = [dict(s.to_dict(), role='student') for s in students]
-        teachers = Teacher.select()
-        users += [dict(t.to_dict(), role='teacher') for t in teachers]
+        if current_user.role == 'admin':
+            teachers = Teacher.select()
+            users += [dict(t.to_dict(), role='teacher') for t in teachers]
 
     
 
@@ -65,14 +66,12 @@ def user_list():
 @users_bp.route('/search')
 @login_required
 def user_search():
-    print("DEBUG current_user:", g.current_user)
     """
     ユーザー名・ID検索（Subject検索方式）
     """
 
     keyword = request.args.get('keyword', '').strip()
     role = request.args.get('role', 'all')
-    current_user = g.current_user
 
     if current_user is None:
         abort(401)
@@ -116,7 +115,6 @@ def user_search():
     return render_template(
         "user/user_list.html",
         active_template='dashboard/admin.html',
-        role=current_user.role,
         active_page='users',
         title='検索結果',
         users=users,
@@ -144,7 +142,7 @@ def user_detail():
     else:
         abort(403)
 
-    if g.current_user.is_student() and g.current_user.user_id != user.user_id:
+    if current_user.role != "admin" and current_user.user_id != user.user_id:
         abort(403)
         
         user_data = {

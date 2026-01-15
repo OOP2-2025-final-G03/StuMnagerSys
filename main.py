@@ -15,10 +15,6 @@ register_login_signals(app)
 
 for bp in blueprints:
     app.register_blueprint(bp)
-# 全リクエストで g.current_user が使える様にする。
-@app.before_request
-def before_request():
-    load_current_user()
         
 @app.context_processor
 def inject_user():

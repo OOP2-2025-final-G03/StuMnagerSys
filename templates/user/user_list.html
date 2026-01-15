@@ -4,21 +4,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
 {% endblock %}
 
-{% block page_title %}ユーザー管理{% endblock %}
+{% block page_title %}{{ 'ユーザー' if user_role == 'admin' else '学生' }}管理{% endblock %}
 
 {% block main_content %}
     <div class="list-card">
         
         <div class="list-header">
-            <h2>ユーザー管理</h2>
-            <p>システムに登録されているユーザーを管理します。</p>
+            <h2>{{ 'ユーザー' if user_role == 'admin' else '学生' }}管理</h2>
+            <p>システムに登録されている{{ 'ユーザー' if user_role == 'admin' else '学生' }}を管理します。</p>
         </div>
 
         {% set current_role = request.args.get('role', 'all') %}
         <div class="filter-tabs">
             <a href="{{ url_for('user.user_list', role='all') }}" class="filter-tab {{ 'active' if current_role == 'all' else '' }}">すべて</a>
             <a href="{{ url_for('user.user_list', role='student') }}" class="filter-tab {{ 'active' if current_role == 'student' else '' }}">学生</a>   
+            {% if user_role == 'admin' %}
             <a href="{{ url_for('user.user_list', role='teacher') }}" class="filter-tab {{ 'active' if current_role == 'teacher' else '' }}">教員</a>
+            {% endif %}
         </div>
 
         <div class="list-actions">
@@ -32,11 +34,12 @@
                 <button type="submit">検索</button>
             </form>
 
-
-            <a href="{{ url_for('user.new_user_form') }}" class="btn-add">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
-                新規登録
-            </a>
+            {% if user_role == 'admin' %}
+                <a href="{{ url_for('user.new_user_form') }}" class="btn-add">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+                    新規登録
+                </a>
+            {% endif %}
         </div>
 
         <div class="table-responsive">
@@ -57,7 +60,9 @@
                         {% if current_role == 'student' %}
                         <th>学年</th>
                         {% endif %}
+                        {% if user_role == 'admin' %}
                         <th width="140">操作</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -101,25 +106,26 @@
                                 <span style="color: #64748b;">{{ user.grade }}</span>
                             </td>
                             {% endif %}
-                            
-                            <td>
-                                <div class="action-buttons">
-                                    {# ID引数を動的に設定 #}
-                                    {% set u_id = user.student_id if user.role == 'student' else user.teacher_id %}
-                                    
-                                    <a href="{{ url_for('user.edit', user_id=u_id) }}" class="action-link edit-link">
-                                        編集
-                                    </a>
-                                    <form method="post"
-                                        action="{{ url_for('user.delete_user', user_id=u_id) }}"
-                                        style="display:inline;"
-                                        onsubmit="return confirm('本当に削除しますか？')">
-                                        <button class="action-link delete-link" type="submit">
-                                            削除
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
+                            {% if user_role == 'admin' %}
+                                <td>
+                                    <div class="action-buttons">
+                                        {# ID引数を動的に設定 #}
+                                        {% set u_id = user.student_id if user.role == 'student' else user.teacher_id %}
+                                        
+                                        <a href="{{ url_for('user.edit', user_id=u_id) }}" class="action-link edit-link">
+                                            編集
+                                        </a>
+                                        <form method="post"
+                                            action="{{ url_for('user.delete_user', user_id=u_id) }}"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('本当に削除しますか？')">
+                                            <button class="action-link delete-link" type="submit">
+                                                削除
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     {% else %}
