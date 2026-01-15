@@ -16,6 +16,9 @@
 {% block page_title %}成績管理{% endblock %}
 
 {% block main_content %}
+    {# 生徒画面判定（Flask-Loginのcurrent_userを利用） #}
+    {% set is_student_view = (current_user.is_authenticated and current_user.role == 'student') %}
+
     <div class="list-card">
 
         <div class="list-header">
@@ -28,34 +31,47 @@
         {% set current_subject = request.args.get('subject', '') %}
 
         <div class="filter-tabs">
-            <a href="{{ url_for('grade.grade_list',
-                                filter='all',
-                                student_number=current_student_number,
-                                subject=current_subject) }}"
-               class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
+            {% if is_student_view %}
+                <a href="{{ url_for('grade.grade_list', filter='all', subject=current_subject) }}"
+                   class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
 
-            <a href="{{ url_for('grade.grade_list',
-                                filter='pass',
-                                student_number=current_student_number,
-                                subject=current_subject) }}"
-               class="filter-tab {{ 'active' if current_filter == 'pass' else '' }}">合格</a>
+                <a href="{{ url_for('grade.grade_list', filter='pass', subject=current_subject) }}"
+                   class="filter-tab {{ 'active' if current_filter == 'pass' else '' }}">合格</a>
 
-            <a href="{{ url_for('grade.grade_list',
-                                filter='fail',
-                                student_number=current_student_number,
-                                subject=current_subject) }}"
-               class="filter-tab {{ 'active' if current_filter == 'fail' else '' }}">不合格</a>
+                <a href="{{ url_for('grade.grade_list', filter='fail', subject=current_subject) }}"
+                   class="filter-tab {{ 'active' if current_filter == 'fail' else '' }}">不合格</a>
+            {% else %}
+                <a href="{{ url_for('grade.grade_list',
+                                    filter='all',
+                                    student_number=current_student_number,
+                                    subject=current_subject) }}"
+                   class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
+
+                <a href="{{ url_for('grade.grade_list',
+                                    filter='pass',
+                                    student_number=current_student_number,
+                                    subject=current_subject) }}"
+                   class="filter-tab {{ 'active' if current_filter == 'pass' else '' }}">合格</a>
+
+                <a href="{{ url_for('grade.grade_list',
+                                    filter='fail',
+                                    student_number=current_student_number,
+                                    subject=current_subject) }}"
+                   class="filter-tab {{ 'active' if current_filter == 'fail' else '' }}">不合格</a>
+            {% endif %}
         </div>
 
         <div class="list-actions">
             <div class="search-box" style="max-width: none;">
                 <!-- 1フォームに2入力 + ボタン：Enterでも検索できる -->
                 <form method="GET" action="{{ url_for('grade.grade_list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <input type="text"
-                           name="student_number"
-                           value="{{ current_student_number }}"
-                           placeholder="学籍番号で検索（例: K24039）"
-                           style="flex:1; min-width: 220px;">
+                    {% if not is_student_view %}
+                        <input type="text"
+                               name="student_number"
+                               value="{{ current_student_number }}"
+                               placeholder="学籍番号で検索（例: K24039）"
+                               style="flex:1; min-width: 220px;">
+                    {% endif %}
 
                     <input type="text"
                            name="subject"
@@ -75,12 +91,14 @@
                 </form>
             </div>
 
-            <a href="{{ url_for('grade.create') }}" class="btn-add">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M12 5v14M5 12h14"></path>
-                </svg>
-                新規登録
-            </a>
+            {% if not is_student_view %}
+                <a href="{{ url_for('grade.create') }}" class="btn-add">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12h14"></path>
+                    </svg>
+                    新規登録
+                </a>
+            {% endif %}
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -102,7 +120,9 @@
                         <th width="80">単位</th>
                         <th width="110">評価（0〜4）</th>
                         <th>ステータス</th>
-                        <th width="160">操作</th>
+                        {% if not is_student_view %}
+                            <th width="160">操作</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -123,6 +143,8 @@
                                     {{ '合格' if is_pass else '不合格' }}
                                 </span>
                             </td>
+
+                            {% if not is_student_view %}
                             <td>
                                 <div class="action-buttons">
                                     <a href="{{ url_for('grade.edit', student_number=g.student_id, subject_id=g.subject_id) }}"
@@ -147,11 +169,12 @@
                                     </a>
                                 </div>
                             </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px; color: #94a3b8;">
+                            <td colspan="{{ 5 if is_student_view else 6 }}" style="text-align: center; padding: 40px; color: #94a3b8;">
                                 データが見つかりませんでした。
                             </td>
                         </tr>
