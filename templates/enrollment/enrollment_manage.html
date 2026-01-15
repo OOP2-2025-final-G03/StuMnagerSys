@@ -16,11 +16,6 @@
     max-width: 100%;
     box-sizing: border-box;
   }
-  html,
-  body {
-    overflow-y: auto !important;
-    height: auto !important;
-  }
   .manage-actions {
     display: flex;
     gap: 12px;
@@ -35,7 +30,7 @@
     font-size: 0.85rem;
   }
 </style>
-{% endblock %} {% block dashboard_content %}
+{% endblock %} {% block main_content %}
 <div class="list-card">
   <div
     class="list-header"
@@ -54,7 +49,7 @@
     </div>
 
     <a
-      href="{{ url_for('subject.list', role=role) }}"
+      href="{{ url_for('subject.subject_list') }}"
       class="action-link edit-link"
       style="
         text-decoration: none;
@@ -91,7 +86,7 @@
 
     <form method="POST">
       <input type="hidden" name="subject_id" value="{{ subject.id }}" />
-      <input type="hidden" name="role" value="{{ role }}" />
+      <input type="hidden" name="role" value="{{ user_role }}" />
 
       <div
         style="
@@ -104,23 +99,23 @@
           margin-bottom: 15px;
         "
       >
-        {% for student in all_students %} {# --- ★ 複数学年対応の判定ロジック
-        --- #} {% set target_grade_list = subject.grade|string %} {% set
-        is_grade_ok = student.学年|string in target_grade_list.split(',') %} {%
-        set grade_diff = not is_grade_ok %} {% set major_diff = (subject.major
-        != '全専攻' and student.専攻 != subject.major) %} {% set is_invalid =
-        grade_diff or major_diff %}
+        {% for student in all_students %}
+        {# --- ★ 複数学年対応の判定ロジック --- #} 
+        {% set target_grade_list = subject.grade|string %} 
+        {% set is_grade_ok = student.grade|string in target_grade_list.split(',') %} 
+        {% set grade_diff = not is_grade_ok %} 
+        {% set major_diff = (subject.major != 'all' and student.major != subject.major) %} 
+        {% set is_invalid = grade_diff or major_diff %}
 
         <label
           style="display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid var(--border-color); 
                       {{ 'opacity: 0.5; cursor: not-allowed; background: #f9f9f9;' if is_invalid else 'cursor: pointer;' }}"
         >
-          <input type="checkbox" name="student_ids" value="{{ student.学籍番号
-          }}" {{ 'disabled' if is_invalid }}>
+          <input type="checkbox" name="student_ids" value="{{ student.student_id }}" {{ 'disabled' if is_invalid }}>
 
           <span style="font-size: 0.875rem; {{ 'color: #999;' if is_invalid }}">
-            [{{ student.学年 }}年|{{ student.専攻 }}] {{ student.学籍番号 }} :
-            {{ student.名前 }} {% if is_invalid %}
+            [{{ student.grade }}年{{ student.major }}] {{ student.student_id }} :
+            {{ student.name }} {% if is_invalid %}
             <small style="color: #ef4444; margin-left: 5px; font-weight: bold">
               ({% if grade_diff %}学年{% endif %}{% if grade_diff and major_diff
               %}&{% endif %}{% if major_diff %}専攻{% endif %}対象外)
@@ -184,9 +179,9 @@
         {% if enrolled_students %} {% for st in enrolled_students %}
         <tr>
           <td style="font-family: monospace">{{ st.student_id }}</td>
-          <td>{{ st.名前 }}</td>
-          <td>{{ st.専攻 }}</td>
-          <td>{{ st.学年 }}年</td>
+          <td>{{ st.name }}</td>
+          <td>{{ st.major }}</td>
+          <td>{{ st.grade }}年</td>
           <td><span class="status-badge">履修中</span></td>
         </tr>
         {% endfor %} {% else %}

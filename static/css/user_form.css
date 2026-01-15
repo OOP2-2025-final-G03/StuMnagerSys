@@ -58,7 +58,7 @@
   gap: 24px 28px;                 /* 行・列間の余白 */
 }
 
-.form-grid .form-group:nth-child(7) {
+.form-grid .form-group:nth-child(7) .form-group:nth-child(8) {
   grid-column: 1 / -1;
 }
 

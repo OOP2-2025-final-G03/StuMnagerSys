@@ -17,7 +17,8 @@ class Student(Model):
     name = CharField()
     birth_date = DateField(null=True)
     gender = CharField(null=True)  # 'male' / 'female' / 'other'
-    major = CharField(null=True)  # 専攻
+    department = CharField(null=True)  # 専攻
+    grade = CharField(null=True)  # 学年
 
     class Meta:
         database = db
@@ -30,10 +31,19 @@ class Student(Model):
         Returns:
             dict: 学生情報
         """
+        user = self.student_id
+        if self.gender == 'male':
+            gender = '男性'
+        elif self.gender == 'female':
+            gender = '女性'
+        else:
+            gender = 'その他'
         return {
-            "student_id": self.student_id,
+            "student_id": user.user_id,
+            "role": user.role,
             "name": self.name,
             "birth_date": self.birth_date.isoformat() if self.birth_date else None,
-            "gender": self.gender,
-            "major": self.major,
+            "gender": gender,
+            "department": self.department,
+            "grade": self.grade,
         }

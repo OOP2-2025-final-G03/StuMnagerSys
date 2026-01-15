@@ -8,8 +8,8 @@
 
 {% block main_content %}
     <div style="margin-bottom: 24px;">
-        <h2 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-main);">{{ title }}</h2>
-        <p style="margin:4px 0 0; font-size:0.875rem; color:var(--text-sub);">プロフィール情報の確認と編集ができます。</p>
+        <h2 style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-main);">プロフィール</h2>
+        <p style="margin:4px 0 0; font-size:0.875rem; color:var(--text-sub);">登録情報の確認・編集</p>
     </div>
 
     <div class="profile-container">
@@ -30,51 +30,51 @@
                 <div class="profile-divider"></div>
 
                 <div class="info-row">
-                    <span class="info-label">登録日</span>
-                    <span class="info-value">{{ user.joined_at }}</span>
+                    <span class="info-label">最終ログイン</span>
+                    <span class="info-value">{{ user.last_login_date }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">状態</span>
-                    <span style="color: #166534; font-weight: 600;">有効</span>
+                    <span class="info-label">IPアドレス</span>
+                    <span class="info-value" style="font-family: monospace;">{{ user.last_login_ip }}</span>
                 </div>
             </div>
         </aside>
 
         <div class="profile-content">
-            <div class="profile-card">
+            <div class="profile-card user-details">
                 <h3 class="section-title">基本情報</h3>
                 
-                <form action="#" method="POST">
+                <form>
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">氏名</label>
-                            <input type="text" class="form-input" value="{{ user.name }}" disabled style="opacity: 0.7; cursor: not-allowed;">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">メールアドレス</label>
-                            <input type="email" class="form-input" value="{{ user.email }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">電話番号</label>
-                            <input type="tel" class="form-input" value="{{ user.phone }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">所属 / 学科</label>
-                            <input type="text" class="form-input" value="情報システム部" disabled style="opacity: 0.7;">
-                        </div>
-
                         <div class="form-group form-full">
-                            <label class="form-label">自己紹介 (Bio)</label>
-                            <textarea class="form-textarea" placeholder="自己紹介を入力してください...">{{ user.bio }}</textarea>
+                            <label class="form-label">氏名</label>
+                            <input type="text" class="form-input" value="{{ user.name }}" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">所属 (学部/学科)</label>
+                            <input type="text" class="form-input" value="{{ user.department }}" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">学年</label>
+                            <input type="text" class="form-input" value="{{ user.grade }}" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">生年月日</label>
+                            <input type="text" class="form-input" value="{{ user.birth_date }}" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">性別</label>
+                            <input type="text" class="form-input" value="{{ user.gender }}" disabled>
                         </div>
                     </div>
 
                     <div class="profile-divider"></div>
 
-                    <h3 class="section-title">セキュリティ</h3>
+                    <h3 class="section-title">セキュリティ设定</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">新しいパスワード</label>
@@ -87,7 +87,7 @@
                     </div>
 
                     <div class="form-actions">
-                        <a href="#" class="btn-cancel">キャンセル</a>
+                        <button type="button" class="btn-cancel" onclick="history.back()">戻る</button>
                         <button type="submit" class="btn-save">変更を保存</button>
                     </div>
                 </form>

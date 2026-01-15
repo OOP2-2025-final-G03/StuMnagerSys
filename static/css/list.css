@@ -1,10 +1,9 @@
-/* static/css/user_list.css */
-
 /* --- 科目リストのコンテナ --- */
 .list-card {
     background: var(--card-bg); /* カード背景色をテーマ変数に */
     border-radius: 12px;
     box-shadow: var(--shadow-sm); 
+    height: auto;
     padding: 24px;
     margin-top: 24px;
     transition: background-color var(--anim-medium), box-shadow var(--anim-medium);
@@ -123,12 +122,15 @@
 
 /* --- 科目リストのテーブル --- */
 .table-responsive {
-    overflow-x: auto;
+    border-bottom: 1px solid var(--border-light);
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-placeholder) transparent;
 }
 
 .styled-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.875rem;
     text-align: left;
 }
@@ -141,6 +143,19 @@
     padding: 12px 16px;
     border-bottom: 1px solid var(--border-light);
     white-space: nowrap;
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.styled-table th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .styled-table td {

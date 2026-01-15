@@ -1,4 +1,4 @@
-{% extends "dashboard/dash_base.html" %} {% block title %}マイ履修科目 |
+{% extends "content_base.html" %} {% block title %}マイ履修科目 |
 学生管理システム{% endblock %} {% block nav_items %} {#
 サイドバーのリンク集（既存のまま） #}
 <a href="/auth/me" class="nav-item"><span class="nav-text">アカウント</span></a>
@@ -30,7 +30,7 @@
     color: #0284c7;
   }
 </style>
-{% endblock %} {% block dashboard_content %}
+{% endblock %} {% block main_content %}
 <div class="list-card">
   <div class="list-header">
     <h2>マイ履修科目一覧</h2>

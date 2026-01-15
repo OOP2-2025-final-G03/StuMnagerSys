@@ -39,12 +39,6 @@
     box-sizing: border-box;
   }
   /* もし画面全体が動かない場合はこちらも確認 */
-  html,
-  body {
-    overflow-y: auto !important;
-    height: auto !important;
-  }
-
   .list-actions {
     display: flex;
     justify-content: space-between;
@@ -154,17 +148,17 @@ main_content %}
   {% set current_category = request.args.get('category', 'all') %}
   <div class="filter-tabs">
     <a
-      href="{{ url_for('subject.list', category='all', role=role) }}"
+      href="{{ url_for('subject.subject_list', category='all') }}"
       class="filter-tab {{ 'active' if current_category == 'all' else '' }}"
       >すべて</a
     >
     <a
-      href="{{ url_for('subject.list', category='required', role=role) }}"
+      href="{{ url_for('subject.subject_list', category='required') }}"
       class="filter-tab {{ 'active' if current_category == 'required' else '' }}"
       >必修科目</a
     >
     <a
-      href="{{ url_for('subject.list', category='elective', role=role) }}"
+      href="{{ url_for('subject.subject_list', category='elective') }}"
       class="filter-tab {{ 'active' if current_category == 'elective' else '' }}"
       >選択科目</a
     >
@@ -176,7 +170,7 @@ main_content %}
       action="{{ url_for('subject.subject_list') }}"
       class="search-box"
     >
-      <input type="hidden" name="role" value="{{ role }}" />
+      <input type="hidden" name="role" value="{{ user_role }}" />
       <input
         type="text"
         name="keyword"
@@ -211,7 +205,7 @@ main_content %}
           <td style="font-weight: 500; color: var(--text-main)">
             {{ sub.name }}
           </td>
-          <td>{{ sub.major }}</td>
+          <td>{{ sub.department }}</td>
           <td>
             <span
               class="category {{ 'category-required' if sub.category == 'required' else 'category-elective' }}"

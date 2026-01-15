@@ -48,6 +48,7 @@
 body {
     margin: 0;
     padding: 0;
+    height: 100vh;
     background-color: var(--page-bg); /* 変数を使用して背景色を適用 */
     color: var(--text-main);          /* 変数を使用して文字色を適用 */
     /* システムフォントを優先使用（Mac, Windows, iOS, Android対応） */

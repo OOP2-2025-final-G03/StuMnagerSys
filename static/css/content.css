@@ -8,6 +8,7 @@ body {
     width: 100vw;
     display: flex; /* サイドバーとメインコンテンツを横並びにする */
     overflow: hidden; /* スクロールはmain-content内で行うため、body自体のスクロールは無効化 */
+    height: 100vh;
     /* 背景色とフォント設定は theme.css で処理済み */
 }
 
