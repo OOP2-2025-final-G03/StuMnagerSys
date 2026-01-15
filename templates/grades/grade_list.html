@@ -28,19 +28,19 @@
         {% set current_subject = request.args.get('subject', '') %}
 
         <div class="filter-tabs">
-            <a href="{{ url_for('grade.list',
+            <a href="{{ url_for('grade.grade_list',
                                 filter='all',
                                 student_number=current_student_number,
                                 subject=current_subject) }}"
                class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
 
-            <a href="{{ url_for('grade.list',
+            <a href="{{ url_for('grade.grade_list',
                                 filter='pass',
                                 student_number=current_student_number,
                                 subject=current_subject) }}"
                class="filter-tab {{ 'active' if current_filter == 'pass' else '' }}">合格</a>
 
-            <a href="{{ url_for('grade.list',
+            <a href="{{ url_for('grade.grade_list',
                                 filter='fail',
                                 student_number=current_student_number,
                                 subject=current_subject) }}"
@@ -50,7 +50,7 @@
         <div class="list-actions">
             <div class="search-box" style="max-width: none;">
                 <!-- 1フォームに2入力 + ボタン：Enterでも検索できる -->
-                <form method="GET" action="{{ url_for('grade.list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <form method="GET" action="{{ url_for('grade.grade_list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
                     <input type="text"
                            name="student_number"
                            value="{{ current_student_number }}"
@@ -110,7 +110,7 @@
                     {% if grade_items and grade_items|length > 0 %}
                         {% for g in grade_items %}
                         <tr>
-                            <td style="font-family: monospace;">{{ g.student_number }}</td>
+                            <td style="font-family: monospace;">{{ g.student_id }}</td>
                             <td style="font-family: monospace;">{{ g.subject_id }}</td>
                             <td>{{ g.unit }}</td>
 
@@ -125,7 +125,7 @@
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <a href="{{ url_for('grade.edit', student_number=g.student_number, subject_id=g.subject_id) }}"
+                                    <a href="{{ url_for('grade.edit', student_number=g.student_id, subject_id=g.subject_id) }}"
                                        class="action-link edit-link">
                                         <svg style="margin-right:4px;" width="14" height="14" fill="none"
                                              stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@
                                         編集
                                     </a>
 
-                                    <a href="{{ url_for('grade.delete', student_number=g.student_number, subject_id=g.subject_id) }}"
+                                    <a href="{{ url_for('grade.delete', student_number=g.student_id, subject_id=g.subject_id) }}"
                                        class="action-link delete-link"
                                        onclick="return confirm('この成績を削除しますか？');">
                                         <svg style="margin-right:4px;" width="14" height="14" fill="none"

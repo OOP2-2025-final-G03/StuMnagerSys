@@ -3,12 +3,12 @@ from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, g
 from peewee import DoesNotExist
 
-from config import Config
+from utils import Config
 from models import Grade
 from models import Subject  # 科目名検索用
 
 # /grades/... に統一
-grade_bp = Blueprint('grade', __name__, url_prefix='/grades')
+grade_bp = Blueprint('grade', __name__, url_prefix='/grade')
 
 
 # -----------------------------
@@ -19,7 +19,7 @@ grade_bp = Blueprint('grade', __name__, url_prefix='/grades')
 def capture_role_type(endpoint, values):
     """
     URLに含まれる role_type をここで一括チェックして g に保存する。
-    例: /grades/student/list なら g.role_type = "student"
+    例: /grade/student/list なら g.role_type = "student"
     """
     if not values:
         return
@@ -92,7 +92,7 @@ if not _EDIT_ROLES:
 # -----------------------------
 
 @grade_bp.route('/<role_type>/list')
-def list(role_type):
+def grade_list(role_type):
     # 既存：filter
     current_filter = request.args.get('filter', 'all')
 
@@ -104,7 +104,7 @@ def list(role_type):
 
     # 学籍番号で検索（部分一致）
     if student_number:
-        query = query.where(Grade.student_number.contains(student_number))
+        query = query.where(Grade.student_id.contains(student_number))
 
     # 科目ID or 科目名で検索
     if subject:
@@ -113,8 +113,7 @@ def list(role_type):
         else:
             # 科目名から subject_id を引いて Grade に絞り込む
             subject_ids = [
-                s.subject_id
-                for s in Subject.select(Subject.subject_id).where(Subject.subject_name.contains(subject))
+                s.id for s in Subject.select(Subject.id).where(Subject.name.contains(subject))
             ]
             if subject_ids:
                 query = query.where(Grade.subject_id.in_(subject_ids))
@@ -128,15 +127,14 @@ def list(role_type):
     elif current_filter == 'fail':
         query = query.where(Grade.score < 60)
 
-    query = query.order_by(Grade.student_number.asc(), Grade.subject_id.asc())
+    query = query.order_by(Grade.student_id.asc(), Grade.subject_id.asc())
 
     return render_template(
         'grades/grade_list.html',
         title='成績一覧',
         items=query,
-        active_template='content_base.html',
-        role=role_type,
-        role_type=role_type
+        active_template=f'dashboard/{role_type}.html',
+        active_page='grades',
     )
 
 
@@ -198,16 +196,16 @@ def create(role_type):
             )
 
         exists = Grade.select().where(
-            (Grade.student_number == student_number) &
+            (Grade.student_id == student_number) &
             (Grade.subject_id == subject_id)
         ).exists()
         if exists:
             flash('同じ学籍番号・科目IDの成績が既に存在します。編集してください。', 'error')
-            return redirect(url_for('grade.list'))
+            return redirect(url_for('grade.grade_list'))
 
-        Grade.create(student_number=student_number, subject_id=subject_id, unit=unit, score=score)
+        Grade.create(student_id=student_number, subject_id=subject_id, unit=unit, score=score)
         flash('成績を登録しました。', 'success')
-        return redirect(url_for('grade.list'))
+        return redirect(url_for('grade.grade_list'))
 
     return render_template(
         'grades/grade_form.html',
@@ -220,11 +218,10 @@ def create(role_type):
 
 
 @grade_bp.route('/<role_type>/edit/<student_number>/<int:subject_id>', methods=['GET', 'POST'])
-@require_roles(*_EDIT_ROLES)
 def edit(role_type, student_number, subject_id):
     try:
         grade = Grade.get(
-            (Grade.student_number == student_number) &
+            (Grade.student_id == student_number) &
             (Grade.subject_id == subject_id)
         )
     except DoesNotExist:
@@ -279,7 +276,7 @@ def edit(role_type, student_number, subject_id):
         grade.save()
 
         flash('成績を更新しました。', 'success')
-        return redirect(url_for('grade.list'))
+        return redirect(url_for('grade.grade_list'))
 
     return render_template(
         'grades/grade_form.html',

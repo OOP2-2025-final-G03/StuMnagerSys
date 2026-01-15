@@ -15,7 +15,7 @@
         </div>
 
         <div class="list-actions">
-            <a href="{{ url_for('grade.list') }}" class="action-link edit-link">
+            <a href="{{ url_for('grade.grade_list') }}" class="action-link edit-link">
                 一覧に戻る
             </a>
         </div>
@@ -32,7 +32,7 @@
 
         <form method="POST"
               action="{% if mode == 'edit' and grade is defined %}
-                          {{ url_for('grade.edit', student_number=grade.student_number, subject_id=grade.subject_id) }}
+                          {{ url_for('grade.edit', student_number=grade.student_id, subject_id=grade.subject_id) }}
                       {% else %}
                           {{ url_for('grade.create') }}
                       {% endif %}">
@@ -49,7 +49,7 @@
                            name="student_number"
                            placeholder="学籍番号（例: K24039）"
                            {% if mode == 'edit' and grade is defined %}readonly{% endif %}
-                           value="{% if grade is defined %}{{ grade.student_number }}{% else %}{{ request.form.get('student_number','') }}{% endif %}">
+                           value="{% if grade is defined %}{{ grade.student_id }}{% else %}{{ request.form.get('student_id','') }}{% endif %}">
                 </div>
 
                 <div class="search-box" style="flex: 1; max-width: none;">
