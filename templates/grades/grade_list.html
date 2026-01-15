@@ -1,5 +1,14 @@
 {% extends active_template %}
 
+{% macro score_to_rank(score) -%}
+    {%- if score <= 59 -%}0
+    {%- elif score <= 69 -%}1
+    {%- elif score <= 79 -%}2
+    {%- elif score <= 89 -%}3
+    {%- else -%}4
+    {%- endif -%}
+{%- endmacro %}
+
 {% block extra_css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
 {% endblock %}
@@ -15,27 +24,58 @@
         </div>
 
         {% set current_filter = request.args.get('filter', 'all') %}
+        {% set current_student_number = request.args.get('student_number', '') %}
+        {% set current_subject = request.args.get('subject', '') %}
+
         <div class="filter-tabs">
-            <a href="{{ url_for('grade.list', role_type=role_type, filter='all', q=request.args.get('q','')) }}"
+            <a href="{{ url_for('grade.list',
+                                filter='all',
+                                student_number=current_student_number,
+                                subject=current_subject) }}"
                class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
-            <a href="{{ url_for('grade.list', role_type=role_type, filter='pass', q=request.args.get('q','')) }}"
+
+            <a href="{{ url_for('grade.list',
+                                filter='pass',
+                                student_number=current_student_number,
+                                subject=current_subject) }}"
                class="filter-tab {{ 'active' if current_filter == 'pass' else '' }}">合格</a>
-            <a href="{{ url_for('grade.list', role_type=role_type, filter='fail', q=request.args.get('q','')) }}"
+
+            <a href="{{ url_for('grade.list',
+                                filter='fail',
+                                student_number=current_student_number,
+                                subject=current_subject) }}"
                class="filter-tab {{ 'active' if current_filter == 'fail' else '' }}">不合格</a>
         </div>
 
         <div class="list-actions">
-            <div class="search-box">
-                <form method="GET" action="{{ url_for('grade.list', role_type=role_type) }}">
+            <div class="search-box" style="max-width: none;">
+                <!-- 1フォームに2入力 + ボタン：Enterでも検索できる -->
+                <form method="GET" action="{{ url_for('grade.list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
                     <input type="text"
-                           name="q"
-                           value="{{ request.args.get('q','') }}"
-                           placeholder="学籍番号、科目IDで検索...">
+                           name="student_number"
+                           value="{{ current_student_number }}"
+                           placeholder="学籍番号で検索（例: K24039）"
+                           style="flex:1; min-width: 220px;">
+
+                    <input type="text"
+                           name="subject"
+                           value="{{ current_subject }}"
+                           placeholder="科目名 または 科目IDで検索（例: 数学 / 12）"
+                           style="flex:1; min-width: 220px;">
+
                     <input type="hidden" name="filter" value="{{ current_filter }}">
+
+                    <button type="submit" class="btn-add">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21 21l-4.35-4.35"></path>
+                            <circle cx="11" cy="11" r="7"></circle>
+                        </svg>
+                        検索
+                    </button>
                 </form>
             </div>
 
-            <a href="{{ url_for('grade.create', role_type=role_type) }}" class="btn-add">
+            <a href="{{ url_for('grade.create') }}" class="btn-add">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
@@ -60,7 +100,7 @@
                         <th width="140">学籍番号</th>
                         <th width="90">科目ID</th>
                         <th width="80">単位</th>
-                        <th width="90">評価</th>
+                        <th width="110">評価（0〜4）</th>
                         <th>ステータス</th>
                         <th width="160">操作</th>
                     </tr>
@@ -73,7 +113,10 @@
                             <td style="font-family: monospace;">{{ g.student_number }}</td>
                             <td style="font-family: monospace;">{{ g.subject_id }}</td>
                             <td>{{ g.unit }}</td>
-                            <td>{{ g.score }}</td>
+
+                            <!-- 0-100 を 0-4 に変換して表示 -->
+                            <td>{{ score_to_rank(g.score) }}</td>
+
                             <td>
                                 {% set is_pass = (g.score >= 60) %}
                                 <span class="status-badge {{ 'status-active' if is_pass else 'status-inactive' }}">
@@ -82,7 +125,7 @@
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <a href="{{ url_for('grade.edit', role_type=role_type, student_number=g.student_number, subject_id=g.subject_id) }}"
+                                    <a href="{{ url_for('grade.edit', student_number=g.student_number, subject_id=g.subject_id) }}"
                                        class="action-link edit-link">
                                         <svg style="margin-right:4px;" width="14" height="14" fill="none"
                                              stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -92,7 +135,7 @@
                                         編集
                                     </a>
 
-                                    <a href="{{ url_for('grade.delete', role_type=role_type, student_number=g.student_number, subject_id=g.subject_id) }}"
+                                    <a href="{{ url_for('grade.delete', student_number=g.student_number, subject_id=g.subject_id) }}"
                                        class="action-link delete-link"
                                        onclick="return confirm('この成績を削除しますか？');">
                                         <svg style="margin-right:4px;" width="14" height="14" fill="none"

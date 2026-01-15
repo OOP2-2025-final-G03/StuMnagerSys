@@ -50,14 +50,14 @@ def dashboard(role_type):
                          active_page='dashboard')
 
 @app.route('/grades')
-def grades_redirect():
-    return redirect(url_for('grade.list', role_type='teacher'))  # デフォルトを教員にする例
+def grades_root():
+    # /grades → /grades/list にリダイレクト
+    return redirect(url_for('grade.list'))
 
-@app.route('/grades/<role_type>')
-def grades_role(role_type):
-    if role_type not in Config.ROLE_TITLES:
-        abort(404)
-    return redirect(url_for('grade.list', role_type=role_type))
+# 互換用：/grade/list にアクセスしても /grades/list へ（role無し）
+@app.route("/grade/list")
+def legacy_grade_list():
+    return redirect(url_for("grade.list"))
 
 if __name__ == '__main__':
     app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)
