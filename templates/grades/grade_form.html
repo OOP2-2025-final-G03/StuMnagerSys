@@ -1,0 +1,225 @@
+{% extends active_template %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
+{% endblock %}
+
+{% block page_title %}成績管理{% endblock %}
+
+{% block main_content %}
+    <div class="list-card">
+
+        <div class="list-header">
+            <h2>{{ title }}</h2>
+            <p>{{ '成績を登録します。' if mode == 'create' else '成績を編集します。' }}</p>
+        </div>
+
+        <div class="list-actions">
+            <a href="{{ url_for('grade.grade_list') }}" class="action-link edit-link">
+                一覧に戻る
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div>
+                    {% for category, message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST"
+              action="{% if mode == 'edit' and grade is defined %}
+                          {{ url_for('grade.edit', student_number=grade.student_id, subject_id=grade.subject_id) }}
+                      {% else %}
+                          {{ url_for('grade.create') }}
+                      {% endif %}">
+
+            <div class="filter-tabs">
+                <span class="filter-tab active">
+                    {{ '新規登録' if mode == 'create' else '編集' }}
+                </span>
+            </div>
+
+            <div class="list-actions" style="margin-top: 14px; align-items: stretch;">
+                <!-- 学籍番号 -->
+                <div class="search-box" style="flex: 1; max-width: none;">
+                    {% if mode == 'edit' and grade is defined %}
+                        <input type="text"
+                               name="student_number"
+                               readonly
+                               value="{{ grade.student_id }}">
+                    {% else %}
+                        {% set selected_student = request.form.get('student_number', '') %}
+                        <select name="student_number" id="student_select" required style="width:100%; min-height: 38px;">
+                            <option value="">学籍番号を選択してください</option>
+                            {% for s in students %}
+                                <option value="{{ s.student_id }}"
+                                        {{ 'selected' if selected_student == (s.student_id|string) else '' }}>
+                                    {{ s.student_id }}{% if s.name %}（{{ s.name }}）{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+
+                <!-- 科目 -->
+                <div class="search-box" style="flex: 1; max-width: none;">
+                    {% if mode == 'edit' and grade is defined %}
+                        <input type="number"
+                               name="subject_id"
+                               readonly
+                               value="{{ grade.subject_id }}">
+                    {% else %}
+                        {% set selected_subject = request.form.get('subject_id', '') %}
+                        <select name="subject_id"
+                                id="subject_select"
+                                required
+                                disabled
+                                data-selected="{{ selected_subject }}"
+                                style="width:100%; min-height: 38px;">
+                            <option value="">学籍番号を先に選択してください</option>
+                        </select>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="list-actions" style="margin-top: 10px; align-items: stretch;">
+                <div class="search-box" style="flex: 1; max-width: none;">
+                    <input type="number"
+                           name="unit"
+                           id="unit_input"
+                           min="0"
+                           placeholder="単位"
+                           readonly
+                           value="{% if grade is defined %}{{ grade.unit }}{% else %}{{ request.form.get('unit','') }}{% endif %}">
+                </div>
+
+                <div class="search-box" style="flex: 1; max-width: none;">
+                    <input type="number"
+                           name="score"
+                           min="0"
+                           max="100"
+                           placeholder="点数（0〜100）（例: 85）"
+                           value="{% if grade is defined %}{{ grade.score }}{% else %}{{ request.form.get('score','') }}{% endif %}">
+                </div>
+
+                <button type="submit" class="btn-add">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12h14"></path>
+                    </svg>
+                    {{ '登録' if mode == 'create' else '更新' }}
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+    {% if mode == 'create' %}
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const studentSelect = document.getElementById('student_select');
+        const subjectSelect = document.getElementById('subject_select');
+        const unitInput = document.getElementById('unit_input');
+
+        if (!studentSelect || !subjectSelect || !unitInput) return;
+
+        const endpointTemplate = "{{ url_for('grade.enrolled_subjects', student_number='__STUDENT__') }}";
+
+        const resetSubjects = (message) => {
+            subjectSelect.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = message;
+            subjectSelect.appendChild(opt);
+            subjectSelect.disabled = true;
+            unitInput.value = '';
+        };
+
+        const populateSubjects = (subjects, selectedId) => {
+            subjectSelect.innerHTML = '';
+
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '科目を選択してください';
+            subjectSelect.appendChild(defaultOpt);
+
+            for (const s of subjects) {
+                const opt = document.createElement('option');
+                opt.value = String(s.id);
+                opt.textContent = `${s.name}（${s.id}）`;
+                opt.dataset.credits = String(s.credits);
+                if (selectedId && String(selectedId) === String(s.id)) {
+                    opt.selected = true;
+                }
+                subjectSelect.appendChild(opt);
+            }
+
+            subjectSelect.disabled = false;
+
+            // 既に選択済みなら単位も反映
+            const sel = subjectSelect.selectedOptions && subjectSelect.selectedOptions[0];
+            if (sel && sel.dataset && sel.dataset.credits) {
+                unitInput.value = sel.dataset.credits;
+            } else {
+                unitInput.value = '';
+            }
+        };
+
+        const loadEnrolledSubjects = async (studentId, selectedSubjectId) => {
+            if (!studentId) {
+                resetSubjects('学籍番号を先に選択してください');
+                return;
+            }
+
+            const url = endpointTemplate.replace('__STUDENT__', encodeURIComponent(studentId));
+            try {
+                const res = await fetch(url, {headers: {'Accept': 'application/json'}});
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    resetSubjects('履修科目がありません');
+                    return;
+                }
+
+                populateSubjects(data, selectedSubjectId);
+            } catch (e) {
+                resetSubjects('科目の取得に失敗しました');
+            }
+        };
+
+        // 学籍番号変更で履修科目を再取得
+        studentSelect.addEventListener('change', () => {
+            const sid = studentSelect.value;
+            // 学籍番号変更時は科目・単位をリセット
+            resetSubjects('読み込み中...');
+            loadEnrolledSubjects(sid, '');
+        });
+
+        // 科目変更で単位を自動入力
+        subjectSelect.addEventListener('change', () => {
+            const sel = subjectSelect.selectedOptions && subjectSelect.selectedOptions[0];
+            if (sel && sel.dataset && sel.dataset.credits) {
+                unitInput.value = sel.dataset.credits;
+            } else {
+                unitInput.value = '';
+            }
+        });
+
+        // 初期表示：POSTエラーで戻った場合でも復元できるようにする
+        const initialStudent = studentSelect.value;
+        const initialSelectedSubject = subjectSelect.dataset.selected || '';
+        if (initialStudent) {
+            resetSubjects('読み込み中...');
+            loadEnrolledSubjects(initialStudent, initialSelectedSubject);
+        } else {
+            resetSubjects('学籍番号を先に選択してください');
+        }
+    });
+    </script>
+    {% endif %}
+{% endblock %}

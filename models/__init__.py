@@ -18,6 +18,15 @@ MODELS = [
     Enrollment
 ]
 
+__all__ = [
+    "Student",
+    "Teacher",
+    "Password",
+    "Subject",
+    "Grade",
+    "User",
+    "Enrollment"
+]
 def create_admin_user():
     User.get_or_create(user_id='admin', defaults={'role': 'admin'})
     Password.create_password(user_id='admin', raw_password='admin', role='admin')

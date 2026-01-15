@@ -1,7 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for
 from flask_login import login_required, current_user
 import datetime
-from models import User, initialize_database, Student, Teacher
+from models import User, initialize_database, Student, Teacher, Grade
 from routes import blueprints
 from utils import login_manager, Config, role_required, register_login_signals
 
@@ -44,8 +44,18 @@ def dashboard():
                          current_date=current_date,
                          active_page='dashboard')
 
+@app.route('/grades')
+def grades_root():
+    # /grades → /grades/list にリダイレクト
+    return redirect(url_for('grade.grade_list'))
+
+# 互換用：/grade/list にアクセスしても /grades/list へ（role無し）
+@app.route("/grade/list")
+def legacy_grade_list():
+    return redirect(url_for("grade.grade_list"))
+
 if __name__ == '__main__':
     # データベースの初期化
-    initialize_database()
+    # initialize_database()
     
     app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)
