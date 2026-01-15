@@ -1,0 +1,80 @@
+{% extends "content_base.html" %} {% block title %}マイ履修科目 |
+学生管理システム{% endblock %} {% block nav_items %} {#
+サイドバーのリンク集（既存のまま） #}
+<a href="/auth/me" class="nav-item"><span class="nav-text">アカウント</span></a>
+<a href="/enrollments" class="nav-item active"
+  ><span class="nav-text">選科管理</span></a
+>
+<a href="/grades/student" class="nav-item"
+  ><span class="nav-text">成績一覧</span></a
+>
+{% endblock %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/list.css') }}"
+/>
+<style>
+  .category {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .category-required {
+    background-color: rgba(249, 115, 22, 0.1);
+    color: #c2410c;
+  }
+  .category-elective {
+    background-color: rgba(14, 165, 233, 0.1);
+    color: #0284c7;
+  }
+</style>
+{% endblock %} {% block main_content %}
+<div class="list-card">
+  <div class="list-header">
+    <h2>マイ履修科目一覧</h2>
+    <p>現在の履修スケジュールです。</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>科目名</th>
+          <th>区分</th>
+          <th>単位数</th>
+          <th>開講日時</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if subjects %} {% for sub in subjects %}
+        <tr>
+          <td style="font-weight: 600; color: var(--primary-color)">
+            {{ sub.name }}
+          </td>
+          <td>
+            <span
+              class="category {{ 'category-required' if sub.category == 'required' else 'category-elective' }}"
+            >
+              {{ '必修' if sub.category == 'required' else '選択' }}
+            </span>
+          </td>
+          <td>{{ sub.credits }} 単位</td>
+          <td>{{ sub.day }}曜 {{ sub.period }}限</td>
+        </tr>
+        {% endfor %} {% else %}
+        <tr>
+          <td
+            colspan="4"
+            style="text-align: center; padding: 40px; color: var(--text-sub)"
+          >
+            現在、履修登録されている科目はありません。
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

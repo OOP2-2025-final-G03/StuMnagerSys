@@ -4,7 +4,7 @@ from utils import db
 class Subject(Model):
     id = AutoField()                     # INTEGER PRIMARY KEY AUTOINCREMENT
     name = CharField()                   # 科目名
-    major = CharField()                  # 専攻
+    department = CharField()                  # 専攻
     category = CharField()               # 単位区分（required / elective）
     grade = IntegerField()               # 対象学年
     credits = IntegerField()             # 単位数

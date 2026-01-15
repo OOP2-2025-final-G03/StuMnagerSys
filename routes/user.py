@@ -1,24 +1,19 @@
 from flask import Blueprint, render_template, request, current_app, abort, g, jsonify, flash, redirect, url_for
+from flask_login import login_required, current_user
 import datetime
 from models import Student, Teacher, User, Password
-from utils.decorators import login_required, role_required
+from utils import role_required
 
 users_bp = Blueprint('user', __name__, url_prefix='/user')
 
 @users_bp.route('/list')
+@role_required('admin')
+@login_required
 def user_list():
     """
     ユーザー管理ページ。
     管理者以外のアクセスは禁止されています。
     """
-    
-    # TODO:重要
-    # ここでセッションや認証情報をチェックして、
-    # ユーザーが正しいロールでログインしているか確認する必要があります。
-    # role_type = session.get('role')
-    # if role_type != 'admin':
-    #    abort(404)
-
     filter_role = request.args.get('role', 'all')
 
     users = []
@@ -89,7 +84,7 @@ def user_detail():
             "user_id": profile.student_id if user.role == "teacher" else profile.teacher_id,
             "name": profile.name,
             "role": user.role,
-            "department": profile.department if user.role == "teacher" else profile.major,
+            "department": profile.department if user.role == "teacher" else profile.department,
             "gender": profile.gender,
             "birth_date": profile.birth_date.strftime("%Y-%m-%d") if profile.birth_date else None,
         }
@@ -100,8 +95,8 @@ def user_detail():
 # ユーザー作成
 # =====================
 @users_bp.route('/create', methods=['POST'])
-#@login_required
-#@role_required('admin')
+@role_required('admin')
+@login_required
 def create_user():
     data = request.json
     user_id=data.get('user_id')
@@ -127,7 +122,7 @@ def create_user():
                 student_id=user_id,
                 name=name,
                 birth_date=birth_date,
-                major=department,
+                department=department,
                 gender=gender
             )
         elif role == "teacher":
@@ -154,8 +149,8 @@ def create_user():
 # ユーザー更新
 # =====================
 @users_bp.route('/update', methods=['POST'])
-#@login_required
-#@role_required('admin')
+@role_required('admin')
+@login_required
 def update_user():
     data = request.json
 
@@ -174,8 +169,8 @@ def update_user():
 # ユーザー削除
 # =====================
 @users_bp.route('/delete/<string:user_id>', methods=['POST'])
-#@login_required
-#@role_required('admin')
+@role_required('admin')
+@login_required
 def delete_user(user_id):
     user = User.get_or_none(User.user_id == user_id)
     if not user:
@@ -192,8 +187,8 @@ def delete_user(user_id):
 # ユーザー新規作成フォーム表示
 # =====================
 @users_bp.route('/new', methods=['GET'])
-#@login_required
-#@role_required('admin')
+@role_required('admin')
+@login_required
 def new_user_form():    
     return render_template("user/user_form.html",
                            active_template='dashboard/admin.html',
@@ -208,8 +203,8 @@ def new_user_form():
 #  ユーザー編集フォーム表示
 # =====================
 @users_bp.route('/<string:user_id>/edit', methods=['GET'])
-#@login_required
-#@role_required('admin')
+@role_required('admin')
+@login_required
 def edit(user_id):
     user = User.get_or_none(User.user_id == user_id)
     if not user:
@@ -226,7 +221,7 @@ def edit(user_id):
         "user_id": profile.teacher_id if user.role == "teacher" else profile.student_id,
         "name": profile.name,
         "role": user.role,
-        "department": profile.department if user.role == "teacher" else profile.major,
+        "department": profile.department if user.role == "teacher" else profile.department,
         "gender": profile.gender,
         "birth_date": profile.birth_date.strftime("%Y-%m-%d") if profile.birth_date else None,
     }
@@ -246,8 +241,8 @@ def edit(user_id):
 # 更新処理
 # =====================
 @users_bp.route('/<string:user_id>/edit', methods=['POST'])
-#@login_required
-#@role_required('admin')
+@role_required('admin')
+@login_required
 def update(user_id):
     # ユーザー情報を取得
     data = request.json
@@ -275,9 +270,9 @@ def update(user_id):
     profile.birth_date = data.get('birth_date')
     profile.gender = data.get('gender')
     
-    # ユーザーロールに応じて department/major を設定
+    # ユーザーロールに応じて department/department を設定
     if user.role == "student":
-        profile.major = data.get('department')
+        profile.department = data.get('department')
     else:
         profile.department = data.get('department')
     
@@ -298,8 +293,9 @@ def update(user_id):
 # 学生一覧（教師・管理者）
 # =====================
 @users_bp.route('/students', methods=['GET'])
-#@login_required
-#@role_required('teacher', 'admin')
+@role_required('teacher', 'admin')
+@login_required
 def list_students():
-    students = User.select().where(User.role == 'student')
+    users = User.select().where(User.role == 'student')
+    students = Student.select().where(Student.student_id << [s.user_id for s in users])
     return jsonify([s.to_dict() for s in students])
