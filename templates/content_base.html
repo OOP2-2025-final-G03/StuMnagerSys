@@ -9,16 +9,16 @@
     <aside class="sidebar">
         <a href="{{ url_for('auth.profile') }}" class="user-profile-link">
             <div class="user-profile {{'active' if active_page == 'profile' else ''}}">
-                <div class="avatar">{{ role[0] }}</div>
+                <div class="avatar">{{ user_name[0] if user_name else user_role[0] }}</div>
                 <div class="user-info">
-                    <span class="user-name">{{ user_name | default(role) }}</span>
-                    <span class="user-role">{{ user_role_name }}</span>
+                    <span class="user-name">{{ user_name if user_name else user_role }}</span>
+                    <span class="user-role">{{ user_role }}</span>
                 </div>
             </div>
         </a>
 
         <nav class="nav-menu">
-            <a href="/dashboard/{{ role }}" class="nav-item {{ 'active' if active_page == 'dashboard' else '' }}">
+            <a href="/dashboard" class="nav-item {{ 'active' if active_page == 'dashboard' else '' }}">
                 <div class="nav-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </div>

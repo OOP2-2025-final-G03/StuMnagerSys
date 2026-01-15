@@ -47,11 +47,23 @@
           <option value="other" {% if user and user.gender == 'other' %}selected{% endif %}>その他</option>
         </select>
       </div>
+
       <div class="form-group">
         <label>役割</label>
         <select id="role" required>
           <option value="student" {% if user and user.role == 'student' %}selected{% endif %}>学生</option>
           <option value="teacher" {% if user and user.role == 'teacher' %}selected{% endif %}>教師</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>学年</label>
+        <select id="grade">
+          <option value="">選択してください</option>
+          <option value="1" {% if user and user.grade == '1' %}selected{% endif %}>1年</option>
+          <option value="2" {% if user and user.grade == '2' %}selected{% endif %}>2年</option>
+          <option value="3" {% if user and user.grade == '3' %}selected{% endif %}>3年</option>
+          <option value="4" {% if user and user.grade == '4' %}selected{% endif %}>4年</option>
         </select>
       </div>
 

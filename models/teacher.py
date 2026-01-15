@@ -25,10 +25,18 @@ class Teacher(Model):
             Returns:
                 dict: 教員情報
             """
+            user = self.teacher_id
+            if self.gender == 'male':
+                gender = '男性'
+            elif self.gender == 'female':
+                gender = '女性'
+            else:
+                gender = 'その他'
             return {
-                "teacher_id": self.teacher_id,
+                "teacher_id": user.user_id,
+                "role": user.role,
                 "name": self.name,
                 "birth_date": self.birth_date.strftime("%Y-%m-%d") if self.birth_date else None,
                 "department": self.department,
-                "gender": self.gender,
+                "gender": gender,
             }

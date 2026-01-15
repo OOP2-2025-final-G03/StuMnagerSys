@@ -53,7 +53,10 @@
                         <th>生年月日</th>
                         
                         <th>性別</th>
-
+                        
+                        {% if current_role == 'student' %}
+                        <th>学年</th>
+                        {% endif %}
                         <th width="140">操作</th>
                     </tr>
                 </thead>
@@ -81,7 +84,7 @@
                             
                             {# --- 専攻 / 学科 の表示 --- #}
                             <td>
-                                {{ user.major if user.role == 'student' else user.department }}
+                                {{ user.department }}
                             </td>
                             
                             {# --- 生年月日 の表示 --- #}
@@ -92,6 +95,12 @@
                             <td>
                                 <span style="color: #64748b;">{{ user.gender }}</span>
                             </td>
+                            
+                            {% if current_role == 'student' %}
+                            <td>
+                                <span style="color: #64748b;">{{ user.grade }}</span>
+                            </td>
+                            {% endif %}
                             
                             <td>
                                 <div class="action-buttons">

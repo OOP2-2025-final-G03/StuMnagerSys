@@ -4,6 +4,8 @@ from .password import Password
 from .subject import Subject
 from .grade import Grade
 from .user import User
+from .enrollment import Enrollment
+
 from utils import db
 
 MODELS = [
@@ -12,7 +14,8 @@ MODELS = [
     Teacher,
     Subject,
     Grade,
-    User
+    User,
+    Enrollment
 ]
 
 def create_admin_user():

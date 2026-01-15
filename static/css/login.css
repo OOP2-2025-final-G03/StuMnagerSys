@@ -205,6 +205,7 @@ body {
     font-size: 14px;
     font-weight: 500;
     animation: slideDown 0.3s ease-out;
+    color: rgb(231, 93, 93);
 }
 
 .alert-error {
