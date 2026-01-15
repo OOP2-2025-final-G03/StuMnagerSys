@@ -27,7 +27,7 @@
         button.addEventListener('click', function() {
             const userType = this.getAttribute('data-user-type');
             // ユーザー種類に応じてログインページにリダイレクト
-            window.location.href = `/login/${userType}`;
+            window.location.href = `auth/login/${userType}`;
         });
     });
 </script>

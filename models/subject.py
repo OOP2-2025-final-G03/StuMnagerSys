@@ -1,20 +1,16 @@
-from peewee import Model, IntegerField, CharField
+from peewee import Model, AutoField, CharField, IntegerField, SqliteDatabase
 from utils import db
 
-
 class Subject(Model):
-    """
-    科目テーブルのモデル
-    """
-
-    subject_id = IntegerField(primary_key=True)  # 科目ID
-    subject_name = CharField()                   # 科目名
-    major = CharField()                          # 専攻
-    credit_category = CharField()                # 単位区分
-    target_grade = IntegerField()                # 対象学年
-    credits = IntegerField()                     # 単位数
-    day_of_week = CharField()                    # 曜日
+    id = AutoField()                     # INTEGER PRIMARY KEY AUTOINCREMENT
+    name = CharField()                   # 科目名
+    department = CharField()                  # 専攻
+    category = CharField()               # 単位区分（required / elective）
+    grade = IntegerField()               # 対象学年
+    credits = IntegerField()             # 単位数
+    day = CharField()                    # 曜日（月・火など）
+    period = IntegerField()              # 時間（1〜6）
 
     class Meta:
         database = db
-        table_name = "subject"
+        table_name = 'subjects'

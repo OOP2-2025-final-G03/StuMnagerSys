@@ -1,66 +1,50 @@
-from peewee import (
-    Model,
-    CharField,
-    DateField
-)
-from utils import db
+from peewee import Model, CharField, DateTimeField
+from flask_login import UserMixin
+from utils.db import db
 
-
-class User(Model):
-    """
-    ユーザー情報を管理するモデル。
-    学生・教師・スーパーユーザーを role で区別する。
-    """
-
+class User(UserMixin, Model):
     user_id = CharField(primary_key=True)
-    name = CharField()
-    birth_date = DateField(null=True)
-    role = CharField()  # 'student' / 'teacher' / 'superuser'
-    department = CharField(null=True)
+    role = CharField()   # student / teacher / admin
+    last_login = DateTimeField(null=True) # 最終ログイン日時
+    last_logout = DateTimeField(null=True) # 最終ログアウト日時
+    last_login_ip = CharField(null=True) # 最終ログインIPアドレス
 
     class Meta:
         database = db
-        table_name = 'users'
-
-    def is_student(self) -> bool:
+        table_name = "users"
+    
+    def get_id(self):
         """
-        学生かどうかを判定する。
-
-        Returns:
-            bool: 学生の場合 True
+        ユーザーIDを返す。
         """
-        return self.role == 'student'
+        return self.user_id
 
-    def is_teacher(self) -> bool:
+    @property
+    def profile(self):
         """
-        教師かどうかを判定する。
-
-        Returns:
-            bool: 教師の場合 True
+        role に応じて Student / Teacher のプロフィールを返す
         """
-        return self.role == 'teacher'
-
-    def is_superuser(self) -> bool:
+        if self.role == 'student':
+            return self.student_profile.get()
+        elif self.role == 'teacher':
+            return self.teacher_profile.get()
+        elif self.role == 'admin':
+            return {
+                "user_id": self.user_id,
+                "name": self.user_id,
+                "role": self.role,
+            }
+        return None
+    
+    def profile_dict(self) -> dict | None:
         """
-        スーパーユーザーかどうかを判定する。
-
-        Returns:
-            bool: スーパーユーザーの場合 True
+        role に応じたプロフィール情報を dict で返す
         """
-        return self.role == 'superuser'
-
-    def to_dict(self) -> dict:
-        """
-        ユーザー情報を辞書形式に変換する。
-        APIレスポンス用。
-
-        Returns:
-            dict: ユーザー情報
-        """
-        return {
-            "user_id": self.user_id,
-            "name": self.name,
-            "birth_date": self.birth_date.isoformat() if self.birth_date else None,
-            "role": self.role,
-            "department": self.department,
-        }
+        if self.role == 'admin':
+            return {
+                "user_id": self.user_id,
+                "name": self.user_id,
+                "role": self.role,
+            }
+        profile = self.profile
+        return profile.to_dict() if profile else {}

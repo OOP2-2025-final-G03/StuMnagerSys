@@ -1,0 +1,200 @@
+/* =========================================
+   ユーザー登録・編集フォーム用 CSS
+   (Updated for Theme Compatibility)
+========================================= */
+
+/* =========================
+   フォーム全体を包むカード
+========================= */
+.dashboard-card {
+  /* 横幅を制限して中央寄せ */
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 36px;
+
+  /* カード背景・角丸・枠線（テーマ変数を使用） */
+  background-color: var(--card-bg);
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+
+  /* 浮き上がって見える影 */
+  box-shadow: var(--shadow-lg);
+
+  /* ページ表示時のアニメーション */
+  animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* =========================
+   タイトル
+========================= */
+.dashboard-card h2 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-align: center;
+  color: var(--text-main);
+  margin-bottom: 32px;
+  position: relative;
+}
+
+/* タイトル下の装飾ライン */
+.dashboard-card h2::after {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 18px auto 0;
+  background-color: var(--primary-color);
+  border-radius: 2px;
+  opacity: 0.15;
+}
+
+/* =========================
+   入力欄のレイアウト（Grid System）
+========================= */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 左右2列 */
+  gap: 24px 28px;                 /* 行・列間の余白 */
+}
+
+.form-grid .form-group:nth-child(7) .form-group:nth-child(8) {
+  grid-column: 1 / -1;
+}
+
+
+/* =========================
+   各入力項目のグループ
+========================= */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ラベル */
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  color: var(--text-sub);
+}
+
+/* =========================
+   input / select 共通デザイン
+========================= */
+.form-group input,
+.form-group select {
+  /* ブラウザ標準の見た目をリセット */
+  appearance: none;
+
+  /* 入力しやすい余白 */
+  padding: 14px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+
+  /* テーマ変数を使用 */
+  background-color: var(--input-bg);
+  color: var(--text-main);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+
+  /* 影 */
+  box-shadow: var(--shadow-sm);
+
+  /* アニメーション */
+  transition: all var(--anim-fast);
+}
+
+/* フォーカス時（入力中） */
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  /* テーマで定義されたフォーカス用の影を使用 */
+  box-shadow: var(--focus-shadow);
+}
+
+/* 編集時のユーザーIDなど（readonly） */
+.form-group input[readonly] {
+  /* 固定色ではなく、テーマ背景を使用して透明度を下げる */
+  background-color: var(--hover-bg); 
+  color: var(--text-sub);
+  cursor: not-allowed;
+  opacity: 0.8;
+  border-style: dashed; /* 編集不可であることを視覚的に強調 */
+}
+
+/* =========================
+   送信ボタン
+========================= */
+.btn-primary {
+  appearance: none;
+  margin-top: 36px;
+  padding: 18px 0;
+  width: 100%;
+
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  
+  /* ボタンの文字色はテーマのアクティブテキスト色を使用 */
+  color: var(--active-text);
+  background-color: var(--primary-color);
+  
+  border: none;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+
+  transition: all var(--anim-fast);
+}
+
+/* ホバー時 */
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* クリック時 */
+.btn-primary:active {
+  transform: translateY(1px);
+  opacity: 0.9;
+}
+
+/* =========================
+   メッセージ表示
+========================= */
+.message {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: #16a34a; /* 成功色（緑）は視認性のため維持 */
+  min-height: 24px; /* メッセージがない時も高さを確保してレイアウト崩れ防止 */
+}
+
+.message.error {
+  color: #dc2626; /* エラー色（赤） */
+}
+
+/* =========================
+   スマホ対応
+========================= */
+@media (max-width: 640px) {
+  .dashboard-card {
+    padding: 32px 24px;
+  }
+
+  /* スマホでは全要素を1列にする */
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Grid設定をリセット */
+  .form-grid .form-group:nth-child(5) {
+    grid-column: auto;
+  }
+}
