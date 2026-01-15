@@ -1,15 +1,6 @@
 # アプリ名 
 **学生管理システム**
 
-# 役割担当
-| 役割 | 担当 |
-| --- | --- |
-| ログイン機能 | [@taku3](https://github.com/taku3mi) |
-| 成績に関する機能 | [@Alicia4771](https://github.com/Alicia4771) |
-| 科目に関する機能 | [@ta-nu-13](https://github.com/ta-nu-13) |
-| ユーザーに関する機能 | [@kosuke361](https://github.com/kosuke361) |
-| その他 | [@conFess233](https://github.com/conFess233) |
-
 # 概要
 学生管理システムは、学生の成績管理および成績分析を主目的としたWebアプリケーションである。
 <br>ログイン機能を基盤とし、成績情報・科目情報・ユーザー情報の管理を行う。
@@ -188,3 +179,12 @@ python main.py
 ```
 http://localhost:8000/
 ```
+
+# 役割担当
+| 役割 | 担当 |
+| --- | --- |
+| ログイン機能 | [@taku3](https://github.com/taku3mi) |
+| 成績に関する機能 | [@Alicia4771](https://github.com/Alicia4771) |
+| 科目に関する機能 | [@ta-nu-13](https://github.com/ta-nu-13) |
+| ユーザーに関する機能 | [@kosuke361](https://github.com/kosuke361) |
+| その他 | [@conFess233](https://github.com/conFess233) |
