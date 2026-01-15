@@ -1,4 +1,4 @@
-{% extends active_template %} {% block extra_css %}
+{% extends active_template %}{% block extra_css %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/list.css') }}"
@@ -137,12 +137,18 @@
     -webkit-overflow-scrolling: touch;
   }
 </style>
-{% endblock %} {% block page_title %}科目管理{% endblock %} {% block
+{% endblock %}{% block page_title %} {% if user_role in ['admin', 'teacher'] %}
+全開講科目管理{% else %} 全科目一覧 {% endif %}{% endblock %} {% block
 main_content %}
 <div class="list-card">
   <div class="list-header">
-    <h2>{{ title }}</h2>
-    <p>カリキュラムや担当教員、単位数を管理します。</p>
+    {% if user_role in ['admin', 'teacher'] %}
+    <h2>全開講科目管理</h2>
+    <p>開講科目の編集・削除および履修者の管理ができます。</p>
+    {% else %}
+    <h2>全科目一覧</h2>
+    <p>現在開講されている科目の一覧です。</p>
+    {% endif %}
   </div>
 
   {% set current_category = request.args.get('category', 'all') %}
@@ -180,7 +186,7 @@ main_content %}
       <button type="submit" class="btn-search">検索</button>
     </form>
     {% if user_role in ['admin', 'teacher'] %}
-    <a href="{{ url_for('subject.create', role=role) }}" class="btn-add"
+    <a href="{{ url_for('subject.create', role=user_role) }}" class="btn-add"
       >新規科目</a
     >
     {% endif %}
@@ -197,7 +203,9 @@ main_content %}
           <th>対象学年</th>
           <th>単位数</th>
           <th>開講日時</th>
+          {% if user_role in ['admin', 'teacher'] %}
           <th>操作</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -217,31 +225,34 @@ main_content %}
           <td>{{ sub.grade }} 年</td>
           <td><span class="credit-num">{{ sub.credits }}</span> 単位</td>
           <td>{{ sub.day }} {{ sub.period }}限</td>
+
+          {% if user_role in ['admin', 'teacher'] %}
           <td>
             <div class="action-buttons">
               <a
-                href="{{ url_for('subject.manage', subject_id=sub.id, role=role) }}"
+                href="{{ url_for('subject.manage', subject_id=sub.id, role=user_role) }}"
                 class="btn-manage"
                 >履修管理</a
               >
               <a
-                href="{{ url_for('subject.edit', subject_id=sub.id, role=role) }}"
+                href="{{ url_for('subject.edit', subject_id=sub.id, role=user_role) }}"
                 class="action-link edit-link"
                 >編集</a
               >
               <a
-                href="{{ url_for('subject.delete', subject_id=sub.id, role=role) }}"
+                href="{{ url_for('subject.delete', subject_id=sub.id, role=user_role) }}"
                 class="action-link delete-link"
                 onclick="return confirm('本当に削除しますか？');"
                 >削除</a
               >
             </div>
           </td>
+          {% endif %}
         </tr>
         {% endfor %} {% else %}
         <tr>
           <td
-            colspan="8"
+            colspan="{{ 8 if user_role in ['admin', 'teacher'] else 7 }}"
             style="text-align: center; padding: 40px; color: #94a3b8"
           >
             データが見つかりませんでした。

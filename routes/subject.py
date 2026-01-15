@@ -10,7 +10,7 @@ subject_bp = Blueprint('subject', __name__, url_prefix='/subject')
 # 科目一覧
 # ========================
 @subject_bp.route('/list')
-@role_required('admin', 'teacher')
+@role_required('admin', 'teacher','student')
 @login_required
 def subject_list():
     query = Subject.select()
@@ -47,6 +47,7 @@ def subject_list():
         active_page='subjects',
         subjects=sorted_subjects,
         title='科目管理',
+        user_role=role,
         active_template=f'dashboard/{role}.html',
         current_date=datetime.now().strftime('%Y年%m月%d日')
     )
@@ -58,7 +59,7 @@ def subject_list():
 @role_required('admin', 'teacher')
 @login_required
 def create():
-    # ★ガード処理：学生なら一覧へ戻す
+    # ガード処理：学生なら一覧へ戻す
     role_type = current_user.role
     
     if request.method == 'POST':
@@ -100,7 +101,7 @@ def create():
 @role_required('admin', 'teacher')
 @login_required
 def edit(subject_id):
-    # ★ガード処理：学生なら一覧へ戻す
+    # ガード処理：学生なら一覧へ戻す
     role_type = current_user.role
     
     subject = Subject.get_or_none(Subject.id == subject_id)
@@ -173,5 +174,45 @@ def manage(subject_id):
         enrolled_students=enrolled_students, 
         all_students=all_students, 
         active_template=f'dashboard/{current_user.role}.html',
+        current_date=datetime.now().strftime('%Y年%m月%d日')
+    )
+
+# ========================
+# 履修済科目一覧 (学生専用)
+# ========================
+# subject.py に追加
+
+@subject_bp.route('/my-list')
+@role_required('student')
+@login_required
+def my_subject_list():
+    role = current_user.role
+    
+    # ログイン中のユーザーが履修登録(Enrollment)している科目のみを抽出
+    query = (Subject
+             .select()
+             .join(Enrollment, on=(Enrollment.subject_id == Subject.id))
+             .where(Enrollment.student_id == current_user.id)) 
+
+    subjects = list(query)
+    
+    # ソート処理（既存のロジックと同一）
+    day_order = {'月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6, '日': 7}
+    def sort_key(sub):
+        d = day_order.get(sub.day, 9)
+        try:
+            p = int(sub.period)
+        except (ValueError, TypeError):
+            p = 9
+        return (d, p)
+    sorted_subjects = sorted(subjects, key=sort_key)
+
+    return render_template(
+        'subject/subject_list.html',
+        active_page='my_subjects', # サイドバーの判定用
+        subjects=sorted_subjects,
+        title='履修済科目',
+        user_role=role,
+        active_template=f'dashboard/{role}.html',
         current_date=datetime.now().strftime('%Y年%m月%d日')
     )
