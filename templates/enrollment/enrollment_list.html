@@ -1,14 +1,6 @@
-{% extends "content_base.html" %} {% block title %}マイ履修科目 |
-学生管理システム{% endblock %} {% block nav_items %} {#
-サイドバーのリンク集（既存のまま） #}
-<a href="/auth/me" class="nav-item"><span class="nav-text">アカウント</span></a>
-<a href="/enrollments" class="nav-item active"
-  ><span class="nav-text">選科管理</span></a
->
-<a href="/grades/student" class="nav-item"
-  ><span class="nav-text">成績一覧</span></a
->
-{% endblock %} {% block extra_css %}
+{% extends "dashboard/student.html" %} {% block title %}マイ履修科目 |
+学生管理システム{% endblock %} {% block page_title %}履修科目{% endblock %} {%
+block extra_css %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/list.css') }}"

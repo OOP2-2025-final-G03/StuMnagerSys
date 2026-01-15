@@ -1,6 +1,48 @@
-{% extends "content_base.html" %}
+{% extends "content_base.html" %} {% block title %}Dashboard |
+学生管理システム{% endblock %} {% block nav_items %}
+<a
+  href="/enrollments"
+  class="nav-item {{ 'active' if active_page == 'enrollments' else '' }}"
+>
+  <div class="nav-icon">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+      <path
+        d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+      ></path>
+    </svg>
+  </div>
+  <span class="nav-text">履修科目</span>
+</a>
 
-{% block title %}Dashboard | 学生管理システム{% endblock %}
+<a
+  href="{{ url_for('subject.subject_list') }}"
+  class="nav-item {{ 'active' if active_page == 'subjects' else '' }}"
+>
+  <div class="nav-icon">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a4 4 0 0 0-4-4H2z"></path>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a4 4 0 0 1 4-4h6z"></path>
+    </svg>
+  </div>
+  <span class="nav-text">科目一覧</span>
+</a>
 
 {% block nav_items %}
     <a href="/enrollments" class="nav-item {{ 'active' if active_page == 'enrollments' else '' }}">
@@ -26,11 +68,4 @@
         </div>
         <span class="nav-text">成績分析</span>
     </a>
-{% endblock %}
-
-{% block main_content %}
-    <div class="dashboard-card">
-        <h2>学生用ダッシュボードへようこそ</h2>
-        <p>ここでは自分の成績や選科状況を確認できます。</p>
-    </div>
 {% endblock %}
