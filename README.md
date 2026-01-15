@@ -8,6 +8,7 @@
 | 成績に関する機能 | [@Alicia4771](https://github.com/Alicia4771) |
 | 科目に関する機能 | [@ta-nu-13](https://github.com/ta-nu-13) |
 | ユーザーに関する機能 | [@kosuke361](https://github.com/kosuke361) |
+| その他 | [@conFess233](https://github.com/conFess233) |
 
 # 概要
 このアプリケーションは、主に学生の**成績管理/成績分析を目的としたWebアプリケーション**である。<br>
