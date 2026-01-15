@@ -180,7 +180,9 @@ main_content %}
       <button type="submit" class="btn-search">検索</button>
     </form>
     {% if role in ['admin', 'teacher'] %}
-    <a href="{{ url_for('subject.create') }}" class="btn-add">新規科目</a>
+    <a href="{{ url_for('subject.create', role=role) }}" class="btn-add"
+      >新規科目</a
+    >
     {% endif %}
   </div>
 
@@ -223,12 +225,12 @@ main_content %}
                 >履修管理</a
               >
               <a
-                href="{{ url_for('subject.edit', subject_id=sub.id) }}"
+                href="{{ url_for('subject.edit', subject_id=sub.id, role=role) }}"
                 class="action-link edit-link"
                 >編集</a
               >
               <a
-                href="{{ url_for('subject.delete', subject_id=sub.id) }}"
+                href="{{ url_for('subject.delete', subject_id=sub.id, role=role) }}"
                 class="action-link delete-link"
                 onclick="return confirm('本当に削除しますか？');"
                 >削除</a
