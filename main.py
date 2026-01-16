@@ -22,6 +22,7 @@ def inject_user():
         return dict(
             user_name=current_user.profile_dict().get('name', 'ユーザー'),
             user_role=current_user.role,
+            current_date=datetime.datetime.now().strftime('%Y年%m月%d日')
         )
     return {}
 

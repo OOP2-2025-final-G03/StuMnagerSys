@@ -112,7 +112,8 @@
                         <th>科目（科目ID）</th>
                         <th width="80">単位</th>
                         <th width="110">評価（0〜4）</th>
-                        <th>ステータス</th>
+                        <th width="110">評点</th>
+                        <th>状態</th>
                         {% if not is_student_view %}
                             <th width="160">操作</th>
                         {% endif %}
@@ -141,6 +142,8 @@
 
                             <td>{{ g.unit }}</td>
                             <td>{{ score_to_rank(g.score) }}</td>
+
+                            <td>{{ g.score }}</td>
 
                             <td>
                                 {% set is_pass = (g.score >= 60) %}

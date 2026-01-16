@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from flask import Blueprint, jsonify, request
+from flask_login import current_user, login_required
 from peewee import OperationalError
 
 from models import Grade
@@ -47,6 +48,7 @@ def _load_subject_name_map() -> dict[int, str]:
 
 
 @analytics_bp.get("/grades/chart")
+@login_required
 def grades_chart():
     """
     グラフ表示用データを返す:
@@ -58,7 +60,7 @@ def grades_chart():
 
     q = Grade.select()
     if student_number:
-        q = q.where(Grade.student_number == student_number)
+        q = q.where(Grade.student_id == student_number)
 
     subject_name_map = _load_subject_name_map()
 
@@ -67,7 +69,7 @@ def grades_chart():
     sum_by_subject = defaultdict(int)
 
     for g in q:
-        s_no = g.student_number
+        s_no = g.student_id
         subj_id = int(g.subject_id)
         unit = int(g.unit)
         eval_ = score_to_eval(int(g.score))

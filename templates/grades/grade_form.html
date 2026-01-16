@@ -1,23 +1,17 @@
 {% extends active_template %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_form.css') }}">
 {% endblock %}
 
 {% block page_title %}成績管理{% endblock %}
 
 {% block main_content %}
-    <div class="list-card">
+    <div class="dashboard-card">
 
         <div class="list-header">
             <h2>{{ title }}</h2>
             <p>{{ '成績を登録します。' if mode == 'create' else '成績を編集します。' }}</p>
-        </div>
-
-        <div class="list-actions">
-            <a href="{{ url_for('grade.grade_list') }}" class="action-link edit-link">
-                一覧に戻る
-            </a>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -31,29 +25,24 @@
         {% endwith %}
 
         <form method="POST"
-              action="{% if mode == 'edit' and grade is defined %}
-                          {{ url_for('grade.edit', student_number=grade.student_id, subject_id=grade.subject_id) }}
-                      {% else %}
-                          {{ url_for('grade.create') }}
-                      {% endif %}">
+            action="{% if mode == 'edit' and grade is defined %}
+                        {{ url_for('grade.edit', student_number=grade.student_id, subject_id=grade.subject_id) }}
+                    {% else %}
+                        {{ url_for('grade.create') }}
+                    {% endif %}">
 
-            <div class="filter-tabs">
-                <span class="filter-tab active">
-                    {{ '新規登録' if mode == 'create' else '編集' }}
-                </span>
-            </div>
+            <div class="form-grid">
 
-            <div class="list-actions" style="margin-top: 14px; align-items: stretch;">
-                <!-- 学籍番号 -->
-                <div class="search-box" style="flex: 1; max-width: none;">
+                <div class="form-group">
+                    <label>学籍番号</label>
                     {% if mode == 'edit' and grade is defined %}
                         <input type="text"
-                               name="student_number"
-                               readonly
-                               value="{{ grade.student_id }}">
+                            name="student_number"
+                            readonly
+                            value="{{ grade.student_id }}">
                     {% else %}
-                        {% set selected_student = request.form.get('student_number', '') %}
-                        <select name="student_number" id="student_select" required style="width:100%; min-height: 38px;">
+                        {% set selected_student = request.args.get('user_id', '') %}
+                        <select name="student_number" id="student_select" required>
                             <option value="">学籍番号を選択してください</option>
                             {% for s in students %}
                                 <option value="{{ s.student_id }}"
@@ -65,57 +54,60 @@
                     {% endif %}
                 </div>
 
-                <!-- 科目 -->
-                <div class="search-box" style="flex: 1; max-width: none;">
+                <div class="form-group">
+                    <label>科目</label>
                     {% if mode == 'edit' and grade is defined %}
                         <input type="number"
-                               name="subject_id"
-                               readonly
-                               value="{{ grade.subject_id }}">
+                            name="subject_id"
+                            readonly
+                            value="{{ grade.subject_id }}">
                     {% else %}
                         {% set selected_subject = request.form.get('subject_id', '') %}
                         <select name="subject_id"
                                 id="subject_select"
                                 required
                                 disabled
-                                data-selected="{{ selected_subject }}"
-                                style="width:100%; min-height: 38px;">
+                                data-selected="{{ selected_subject }}">
                             <option value="">学籍番号を先に選択してください</option>
                         </select>
                     {% endif %}
                 </div>
+
+                <div class="form-group">
+                    <label>単位</label>
+                    <input type="number"
+                        name="unit"
+                        id="unit_input"
+                        min="0"
+                        readonly
+                        placeholder="自動入力"
+                        value="{% if grade is defined %}{{ grade.unit }}{% else %}{{ request.form.get('unit','') }}{% endif %}">
+                </div>
+
+                <div class="form-group">
+                    <label>点数 (0〜100)</label>
+                    <input type="number"
+                        name="score"
+                        min="0"
+                        max="100"
+                        placeholder="例: 85"
+                        required
+                        value="{% if grade is defined %}{{ grade.score }}{% else %}{{ request.form.get('score','') }}{% endif %}">
+                </div>
+
             </div>
 
-            <div class="list-actions" style="margin-top: 10px; align-items: stretch;">
-                <div class="search-box" style="flex: 1; max-width: none;">
-                    <input type="number"
-                           name="unit"
-                           id="unit_input"
-                           min="0"
-                           placeholder="単位"
-                           readonly
-                           value="{% if grade is defined %}{{ grade.unit }}{% else %}{{ request.form.get('unit','') }}{% endif %}">
-                </div>
+            <button type="submit" class="btn-primary">
+                {{ '登録する' if mode == 'create' else '更新する' }}
+            </button>
 
-                <div class="search-box" style="flex: 1; max-width: none;">
-                    <input type="number"
-                           name="score"
-                           min="0"
-                           max="100"
-                           placeholder="点数（0〜100）（例: 85）"
-                           value="{% if grade is defined %}{{ grade.score }}{% else %}{{ request.form.get('score','') }}{% endif %}">
-                </div>
-
-                <button type="submit" class="btn-add">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M12 5v14M5 12h14"></path>
-                    </svg>
-                    {{ '登録' if mode == 'create' else '更新' }}
-                </button>
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="{{ url_for('grade.grade_list') }}" style="color: var(--text-sub); text-decoration: none; font-size: 14px;">
+                    キャンセルして一覧に戻る
+                </a>
             </div>
 
         </form>
-
     </div>
 
     {% if mode == 'create' %}
@@ -127,7 +119,7 @@
 
         if (!studentSelect || !subjectSelect || !unitInput) return;
 
-        const endpointTemplate = "{{ url_for('grade.enrolled_subjects', student_number='__STUDENT__') }}";
+        const endpointTemplate = "{{ url_for('grade.enrolled_subjects', role_type=role_type, student_number='__STUDENT__') }}";
 
         const resetSubjects = (message) => {
             subjectSelect.innerHTML = '';
@@ -177,7 +169,7 @@
 
             const url = endpointTemplate.replace('__STUDENT__', encodeURIComponent(studentId));
             try {
-                const res = await fetch(url, {headers: {'Accept': 'application/json'}});
+                const res = await fetch(url, {headers: {'Accept': 'application/json', credentials: 'same-origin' }});
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
 

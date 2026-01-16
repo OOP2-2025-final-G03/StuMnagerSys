@@ -60,7 +60,7 @@
                         {% if current_role == 'student' %}
                         <th>学年</th>
                         {% endif %}
-                        {% if user_role == 'admin' %}
+                        {% if user_role != 'student' %}
                         <th width="140">操作</th>
                         {% endif %}
                     </tr>
@@ -121,6 +121,20 @@
                                             onsubmit="return confirm('本当に削除しますか？')">
                                             <button class="action-link delete-link" type="submit">
                                                 削除
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            {% elif user_role == 'teacher' %}
+                                <td>
+                                    <div class="action-buttons">
+                                        {# ID引数を動的に設定 #}
+                                        {% set u_id = user.student_id %}
+
+                                        <form method="post"
+                                            action="{{ url_for('grade.create', user_id=u_id) }}">
+                                            <button class="action-link edit-link" type="submit">
+                                                成績管理
                                             </button>
                                         </form>
                                     </div>

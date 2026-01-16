@@ -59,6 +59,7 @@ def logout():
 
 
 @auth_bp.route('/me')
+@login_required
 def profile():
     """
     ユーザープロフィールページ。
