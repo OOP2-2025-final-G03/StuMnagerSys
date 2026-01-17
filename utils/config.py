@@ -26,12 +26,12 @@ class Config:
     DEBUG = True
 
     # セッション設定
-    SESSION_PERMANENT = False # セッションが期限切れになった後でも保持するかどうか
-    PERMANENT_SESSION_LIFETIME = timedelta(minutes=60) # セッションの有効期限（分）
+    SESSION_PERMANENT = False                           # セッションが期限切れになった後でも保持するかどうか
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=60)  # セッションの有効期限（分）
     # ログイン保持の期間
-    REMEMBER_COOKIE_DURATION = timedelta(days=1) # ログイン保持の期間（日）
-    REMEMBER_COOKIE_HTTPONLY = True
-    REMEMBER_COOKIE_SECURE = True  # https
+    REMEMBER_COOKIE_DURATION = timedelta(days=1)        # ログイン保持の期間（日）
+    REMEMBER_COOKIE_HTTPONLY = True                     # クライアントサイドでのみアクセス可能
+    REMEMBER_COOKIE_SECURE = True                       # httpsのみで送信
 
     # ユーザーロールと表示名のマッピング
     ROLE_TITLES = {

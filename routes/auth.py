@@ -1,9 +1,8 @@
-from flask import Blueprint, render_template, request, url_for, session, abort
+from flask import Blueprint, render_template, request, url_for, redirect, flash
 from flask_login import login_required,login_user,logout_user, current_user
-from models import Password, Student, Teacher, User
-from flask import redirect, flash
-from utils import Config, login_manager
-import datetime
+
+from models import Password, User
+from utils import login_manager
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -65,7 +64,7 @@ def profile():
     ユーザープロフィールページ。
     """
 
-    # デモ用の静的データ
+    # データ
     current_user_data = {
         'id': current_user.user_id,
         'name': current_user.profile_dict().get('name', 'ユーザー'),
@@ -80,16 +79,15 @@ def profile():
 
     return render_template(
         "user/profile.html",
-        active_template=f'dashboard/{current_user.role}.html',
         active_page='profile',
         user=current_user_data,
         title='アカウント設定',
-        current_date=datetime.datetime.now().strftime('%Y年%m月%d日')
     )
+
+# 未実装 設定機能
+# @auth_bp.route("/me/settings")
+# def settings():
+#     """
+#     ユーザー設定ページ。
+#     """
     
-@auth_bp.route("/me/settings")
-def settings():
-    """
-    ユーザー設定ページ。
-    """
-    pass
