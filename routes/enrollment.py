@@ -1,8 +1,8 @@
 from flask import Blueprint, request, render_template, redirect, url_for, current_app
 from flask_login import login_required, current_user
+
 from models import Subject, Enrollment, Student
 from utils import role_required
-from datetime import datetime
 
 enrollment_bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 
@@ -39,9 +39,7 @@ def index():
         'enrollment/enrollment_list.html', 
         subjects=sorted_subjects, 
         role=role,
-        active_template=f'dashboard/{role}.html',
         active_page='enrollments', 
-        current_date=datetime.now().strftime('%Y年%m月%d日')
     )
 
 @enrollment_bp.route('/create', methods=['POST'])
@@ -121,4 +119,4 @@ def delete_bulk_by_id():
             .execute()
         )
     
-    return redirect(url_for('subject.manage', subject_id=subject_id, current_date=datetime.now().strftime('%Y年%m月%d日')))
+    return redirect(url_for('subject.manage', subject_id=subject_id))

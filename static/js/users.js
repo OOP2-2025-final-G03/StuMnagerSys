@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
       role: document.getElementById("role").value,
       gender: document.getElementById("gender").value,
       department: document.getElementById("department").value,
-      password: document.getElementById("password").value
+      password: document.getElementById("password").value,
+      grade: document.getElementById("grade").value
     };
 
     const url = mode === "edit"

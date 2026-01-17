@@ -1,49 +1,25 @@
-from functools import wraps
-
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, g, jsonify
-from peewee import DoesNotExist
 from flask_login import login_required, current_user
+from peewee import DoesNotExist
 
-from utils import Config, role_required
+from utils import role_required
 from models import Grade, Subject, Student, User, Enrollment  # ★Enrollmentを追加
 
 
 # /grade/... に統一
 grade_bp = Blueprint('grade', __name__, url_prefix='/grade')
 
-@grade_bp.url_defaults
-def add_role_type(endpoint, values):
-    """
-    url_for('grade.xxx', ...) のとき role_type が渡されていなければ、
-    現在のリクエストの role_type を自動で補う。
-    """
-    if not endpoint.startswith('grade.'):
-        return
-
-    if 'role_type' in values:
-        return
-
-    role = current_user.role
-    if role is None:
-        role = (request.view_args or {}).get('role_type')
-
-    if role is not None:
-        values['role_type'] = role
-
 # -----------------------------
-# 成績一覧（/grade/<role_type>/list）
+# 成績一覧（/grade/list）
 # -----------------------------
 
-@grade_bp.route('/<role_type>/list')
+@grade_bp.route('/list')
 @login_required
-def grade_list(role_type):
+def grade_list():
     """
     - student: 自分の成績だけ表示（student_number の検索は無視）
     - teacher/admin: 学籍番号・科目で検索できる
     """
-    # admin 以外は URLのrole_type と自分のroleを一致させる
-    if current_user.role != 'admin' and current_user.role != role_type:
-        abort(403)
 
     # 「生徒画面かどうか」は URL ではなくログインユーザーで判定
     is_student_view = (current_user.role == 'student')
@@ -100,7 +76,6 @@ def grade_list(role_type):
         'grades/grade_list.html',
         title='成績一覧',
         items=grade_items,
-        active_template=f'dashboard/{role_type}.html',
         active_page='grades',
         subject_map=subject_map,
         student_name_map=student_name_map,
@@ -110,13 +85,13 @@ def grade_list(role_type):
 
 # -----------------------------
 # ★履修科目取得（AJAX用）
-#   /grade/<role_type>/enrolled_subjects/<student_number>
+#   /grade/enrolled_subjects/<student_number>
 # -----------------------------
 
-@grade_bp.route('/<role_type>/enrolled_subjects/<student_number>')
+@grade_bp.route('/enrolled_subjects/<student_number>')
 @role_required('admin', 'teacher')
 @login_required
-def enrolled_subjects(role_type, student_number):
+def enrolled_subjects(student_number):
     rows = (
         Enrollment
         .select(Enrollment, Subject)
@@ -137,13 +112,13 @@ def enrolled_subjects(role_type, student_number):
 
 
 # -----------------------------
-# 成績作成（/grade/<role_type>/create）
+# 成績作成（/grade/create）
 # -----------------------------
 
-@grade_bp.route('/<role_type>/create', methods=['GET', 'POST'])
+@grade_bp.route('/create', methods=['GET', 'POST'])
 @role_required('admin', 'teacher')
 @login_required
-def create(role_type):
+def create():
     # 生徒一覧（Student + User）
     student_rows = (
         Student
@@ -168,10 +143,7 @@ def create(role_type):
                 'grades/grade_form.html',
                 title='成績登録',
                 mode='create',
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type,
                 students=students,
                 subjects=subjects,
             )
@@ -182,10 +154,7 @@ def create(role_type):
                 'grades/grade_form.html',
                 title='成績登録',
                 mode='create',
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type,
                 students=students,
                 subjects=subjects,
             )
@@ -196,10 +165,7 @@ def create(role_type):
                 'grades/grade_form.html',
                 title='成績登録',
                 mode='create',
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type,
                 students=students,
                 subjects=subjects,
             )
@@ -213,10 +179,7 @@ def create(role_type):
                 'grades/grade_form.html',
                 title='成績登録',
                 mode='create',
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type,
                 students=students,
                 subjects=subjects,
             )
@@ -232,10 +195,7 @@ def create(role_type):
                 'grades/grade_form.html',
                 title='成績登録',
                 mode='create',
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type,
                 students=students,
                 subjects=subjects,
             )
@@ -249,10 +209,7 @@ def create(role_type):
                 'grades/grade_form.html',
                 title='成績登録',
                 mode='create',
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type,
                 students=students,
                 subjects=subjects,
             )
@@ -288,23 +245,20 @@ def create(role_type):
         'grades/grade_form.html',
         title='成績登録',
         mode='create',
-        active_template=f'dashboard/{current_user.role}.html',
         active_page='grades',
-        role=role_type,
-        role_type=role_type,
         students=students,
         subjects=subjects,
     )
 
 
 # -----------------------------
-# 成績編集（/grade/<role_type>/edit/...）
+# 成績編集（/grade/edit/...）
 # -----------------------------
 
-@grade_bp.route('/<role_type>/edit/<student_number>/<int:subject_id>', methods=['GET', 'POST'])
+@grade_bp.route('/edit/<student_number>/<int:subject_id>', methods=['GET', 'POST'])
 @role_required('admin', 'teacher')
 @login_required
-def edit(role_type, student_number, subject_id):
+def edit(student_number, subject_id):
     try:
         grade = Grade.get(
             (Grade.student_id == student_number) &
@@ -325,10 +279,7 @@ def edit(role_type, student_number, subject_id):
                 title='成績編集',
                 mode='edit',
                 grade=grade,
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type
             )
 
         unit = int(unit_raw)
@@ -341,10 +292,7 @@ def edit(role_type, student_number, subject_id):
                 title='成績編集',
                 mode='edit',
                 grade=grade,
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type
             )
 
         if not (0 <= score <= 100):
@@ -354,10 +302,7 @@ def edit(role_type, student_number, subject_id):
                 title='成績編集',
                 mode='edit',
                 grade=grade,
-                active_template=f'dashboard/{current_user.role}.html',
                 active_page='grades',
-                role=role_type,
-                role_type=role_type
             )
 
         grade.unit = unit
@@ -372,21 +317,18 @@ def edit(role_type, student_number, subject_id):
         title='成績編集',
         mode='edit',
         grade=grade,
-        active_template=f'dashboard/{current_user.role}.html',
         active_page='grades',
-        role=role_type,
-        role_type=role_type
     )
 
 
 # -----------------------------
-# 成績削除（/grade/<role_type>/delete/...）
+# 成績削除（/grade/delete/...）
 # -----------------------------
 
-@grade_bp.route('/<role_type>/delete/<student_number>/<int:subject_id>')
+@grade_bp.route('/delete/<student_number>/<int:subject_id>')
 @role_required('admin', 'teacher')
 @login_required
-def delete(role_type, student_number, subject_id):
+def delete(student_number, subject_id):
     try:
         grade = Grade.get(
             (Grade.student_id == student_number) &

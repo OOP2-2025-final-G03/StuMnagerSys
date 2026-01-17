@@ -1,6 +1,6 @@
-from peewee import Model, CharField, IntegerField, ForeignKeyField
+from peewee import Model, CharField, ForeignKeyField
 from utils import db
-from models import Subject, User
+from models import Subject
 
 class Enrollment(Model):
     subject = ForeignKeyField(

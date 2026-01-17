@@ -1,33 +1,13 @@
+from flask import Blueprint, jsonify, request, render_template
+from flask_login import login_required
 from collections import defaultdict
-
-from flask import Blueprint, jsonify, request
-from flask_login import current_user, login_required
 from peewee import OperationalError
 
-from models import Grade
-
-# Subject が無い環境でも動かしたいので import は try
-try:
-    from models import Subject
-except Exception:
-    Subject = None
+from models import Grade, Subject
+from utils import calculate_gpa, score_to_eval
 
 
-analytics_bp = Blueprint("analytics", __name__, url_prefix="/api/analytics")
-
-
-def score_to_eval(score: int) -> int:
-    """0-100(score) -> 評価(0-4)"""
-    if score <= 59:
-        return 0
-    if score <= 69:
-        return 1
-    if score <= 79:
-        return 2
-    if score <= 89:
-        return 3
-    return 4
-
+analytics_bp = Blueprint("analytic", __name__, url_prefix="/analytic")
 
 def _load_subject_name_map() -> dict[int, str]:
     """
@@ -45,62 +25,81 @@ def _load_subject_name_map() -> dict[int, str]:
         return {}
     except Exception:
         return {}
+    
+def _get_chart_all() -> dict:
+    """
+    全体の成績データを集計して返す。
+    
+    Returns:
+        dict: {
+            0~0.5
+            0.5~1
+            ...
+            3.5~4.0
+            以上各GPA範囲の人数の分布
+        }。
+    """
+    
+    
+def _get_chart_by_student() -> dict:
+    """
+    学生別の成績データを集計して返す。
+    Returns:
+        dict: {
+            学生ID,
+            各科目のscore,
+            メッセージ
+            
+        }。
+    """
+    
+def _get_chart_by_subject() -> dict:
+    """
+    科目別の成績データを集計して返す。
+    Returns:
+        dict: {
+            全科目の平均score,
+            全科目ID,
+            メッセージ
+        }。
+    """
 
 
-@analytics_bp.get("/grades/chart")
+
+def _get_chart_by_predict() -> dict:
+    """
+    予測成績データを集計して返す。
+    Returns:
+        dict: {
+            学生ID,
+            平均GPA,
+            学生のGPA,
+            予測GPA,
+            メッセージ
+        }。
+    """
+
+
+@analytics_bp.get("/analytic")
 @login_required
-def grades_chart():
+def analytic():
     """
-    グラフ表示用データを返す:
-      - records: {student_number, subject_id, eval, unit_x_eval, unit, subject_name}
-      - by_student: 学生別の合計(unit_x_eval)
-      - by_subject: 科目別の合計(unit_x_eval)
+    分析データを返す。
     """
-    student_number = (request.args.get("student_number") or "").strip()
-
-    q = Grade.select()
-    if student_number:
-        q = q.where(Grade.student_id == student_number)
-
-    subject_name_map = _load_subject_name_map()
-
-    records = []
-    sum_by_student = defaultdict(int)
-    sum_by_subject = defaultdict(int)
-
-    for g in q:
-        s_no = g.student_id
-        subj_id = int(g.subject_id)
-        unit = int(g.unit)
-        eval_ = score_to_eval(int(g.score))
-        unit_x_eval = unit * eval_
-
-        records.append(
-            {
-                "student_number": s_no,
-                "subject_id": subj_id,
-                "subject_name": subject_name_map.get(subj_id, f"科目{subj_id}"),
-                "unit": unit,
-                "eval": eval_,
-                "unit_x_eval": unit_x_eval,
-            }
-        )
-
-        sum_by_student[s_no] += unit_x_eval
-        sum_by_subject[subj_id] += unit_x_eval
-
-    # Chart.js 向け（labels/data）
-    student_labels = sorted(sum_by_student.keys())
-    student_data = [sum_by_student[k] for k in student_labels]
-
-    subject_labels = sorted(sum_by_subject.keys())
-    subject_data = [sum_by_subject[k] for k in subject_labels]
-    subject_name_labels = [subject_name_map.get(sid, f"科目{sid}") for sid in subject_labels]
-
-    return jsonify(
-        {
-            "records": records,
-            "by_student": {"labels": student_labels, "data": student_data},
-            "by_subject": {"labels": subject_labels, "label_names": subject_name_labels, "data": subject_data},
-        }
+    req_filter = request.args.get("filter", "all")
+    
+    if req_filter == "all":
+        data = _get_chart_all()
+    elif req_filter == "student":
+        data = _get_chart_by_student()
+    elif req_filter == "subject":
+        data = _get_chart_by_subject()
+    elif req_filter == "predict":
+        data = _get_chart_by_predict()
+    
+    return render_template(
+        "analytic/analytic.html",
+        active_page='analytics',
+        title=req_filter,
+        data=data,
     )

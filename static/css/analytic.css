@@ -1,0 +1,130 @@
+
+.analytic-card {
+    background-color: var(--card-bg);
+    border-radius: 24px;
+    padding: 32px; /* 与 content.css 的 dashboard-card 保持一致 */
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-light);
+    
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    height: 100%;
+    min-height: 500px;
+    box-sizing: border-box;
+    
+    opacity: 0;
+    animation: fadeInUp 0.5s var(--anim-curve) forwards;
+}
+
+
+.filter-tabs {
+    display: inline-flex;
+    background-color: var(--input-bg); 
+    padding: 4px;
+    border-radius: 16px;
+    gap: 4px;
+    width: fit-content;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    text-decoration: none;
+    padding: 8px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-sub);
+    transition: all 0.2s var(--anim-curve);
+    white-space: nowrap;
+    position: relative;
+    border: 1px solid transparent;
+}
+
+.filter-tab:hover {
+    color: var(--text-main);
+    background-color: rgba(0,0,0,0.04);
+}
+
+.filter-tab.active {
+    background-color: var(--active-bg);
+    color: var(--active-text);
+    box-shadow: var(--shadow-md);
+}
+
+.chart-container {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    min-height: 300px;
+    padding: 16px 0;
+    
+    background: linear-gradient(
+        90deg, 
+        transparent 0%, 
+        var(--border-light) 50%, 
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: loading shimmer 1.5s infinite;
+}
+
+.chart-container.loaded {
+    background: none;
+    animation: none;
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+.message {
+    margin-top: auto;
+    padding: 20px 24px;
+    background-color: var(--hover-bg);
+    border-radius: 16px;
+    border-left: 4px solid var(--text-main);
+    transition: transform 0.2s var(--anim-curve);
+}
+
+.message:hover {
+    transform: translateX(4px);
+}
+
+.message p {
+    margin: 0;
+    color: var(--text-sub);
+    font-size: 14px;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.message p::before {
+    content: "💡"; 
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .analytic-card {
+        padding: 20px;
+        min-height: auto;
+    }
+
+    .filter-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .filter-tab {
+        flex: 1;
+        text-align: center;
+        padding: 8px 12px;
+    }
+
+    .chart-container {
+        min-height: 250px;
+    }
+}
