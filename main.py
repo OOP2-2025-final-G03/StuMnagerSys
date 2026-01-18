@@ -1,6 +1,6 @@
 from datetime import datetime
 import argparse
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template
 from flask_login import login_required, current_user
 
 from models import initialize_database
