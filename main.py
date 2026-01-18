@@ -1,4 +1,5 @@
 from datetime import datetime
+import argparse
 from flask import Flask, render_template, redirect, url_for
 from flask_login import login_required, current_user
 
@@ -54,8 +55,41 @@ def dashboard():
     return render_template(template_name,
                          active_page='dashboard')
 
+def parse_args():
+    """
+    コマンドライン引数を解析する
+    
+    Returns:
+        argparse.Namespace: 解析された引数
+    """
+    parser = argparse.ArgumentParser(description="学生管理システム")
+
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=Config.HOST,
+        help="サーバーのホスト（例: 0.0.0.0）"
+    )
+
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=Config.PORT,
+        help="サーバーのポート番号（例: 8080）"
+    )
+
+    parser.add_argument(
+        "--debug",
+        type=bool,
+        default=Config.DEBUG,
+        help="デバッグモードを有効化"
+    )
+
+    return parser.parse_args()
+
 if __name__ == '__main__':
     # データベースの初期化
     initialize_database()
     
-    app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)
+    args = parse_args()
+    app.run(host=args.host, port=args.port, debug=args.debug)
