@@ -1,342 +1,161 @@
 """
-データベースの初期化スクリプト
-テスト用のユーザーデータを作成します
+データベースの初期化とランダムデータ生成スクリプトです。
 """
 
+import random
+import argparse
+from datetime import date, timedelta
 from utils.db import db
 from models import Password, Student, Teacher, Subject, Grade, User, Enrollment
-from datetime import date
 
-def init_database():
-    """データベーステーブルの作成とテストデータの挿入"""
-    
-    # テーブル作成
+# --- ランダムのユーザー名と科目 ---
+LAST_NAMES = ["山田", "田中", "佐藤", "鈴木", "高橋", "伊藤", "渡辺", "中村", "小林", "加藤"]
+FIRST_NAMES_MALE = ["太郎", "一郎", "健太", "浩志", "直樹", "亮", "修", "拓也"]
+FIRST_NAMES_FEMALE = ["花子", "恵", "真由美", "陽子", "結衣", "香織", "美紀", "彩"]
+DEPARTMENTS = ["情報科学科", "電気電子工学科", "機械工学科", "経営学科"]
+SUBJECT_PREFIX = ["基礎", "応用", "実践", "概論", "演習"]
+SUBJECT_CORE = ["プログラミング", "アルゴリズム", "データベース", "ネットワーク", "AI", "OS"]
+
+def get_random_date(start_year, end_year):
+    """
+    指定された年の範囲内でランダムな日付を生成
+    """
+    start_date = date(start_year, 1, 1)
+    end_date = date(end_year, 12, 31)
+    time_between_dates = end_date - start_date
+    days_between_dates = time_between_dates.days
+    random_number_of_days = random.randrange(days_between_dates)
+    return start_date + timedelta(days=random_number_of_days)
+
+def clear_db():
+    """
+    既存のデータを削除
+    """
+    tables = [Enrollment, Grade, Password, Student, Teacher, Subject, User]
+    for table in tables:
+        table.delete().execute()
+    print("✓ 既存のデータを削除しました")
+
+def generate_random_data(student_count=20, teacher_count=5, subject_count=10):
+    """
+    ランダムなデータを生成してデータベースに挿入する
+    生成されるデータの数は引数で指定可能
+    Args:
+        student_count (int): 生成する学生の数. 初期値は20.
+        teacher_count (int): 生成する教師の数. 初期値は5.
+        subject_count (int): 生成する科目の数. 初期値は10.
+    """
     db.create_tables([Password, Student, Teacher, Subject, Grade, User, Enrollment], safe=True)
-    print("✓ テーブルが作成されました")
-    
-    # 既存データを削除（開発環境用）
-    Password.delete().execute()
-    Student.delete().execute()
-    Teacher.delete().execute()
-    Subject.delete().execute()
-    Grade.delete().execute()
-    User.delete().execute()
-    Enrollment.delete().execute()
-    print("✓ 既存データをリセットしました")
-    
-    # テスト用学生データ
-    test_students = [
-        {
-            'student_id': 'STU001',
-            'name': '山田太郎',
-            'birth_date': date(2006, 4, 15),
-            'gender': 'male',
-            'department': '情報科学科',
-            'grade': '1',
-        },
-        {
-            'student_id': 'STU002',
-            'name': '佐藤花子',
-            'birth_date': date(2007, 5, 20),
-            'gender': 'female',
-            'department': '情報科学科',
-            'grade': '2',
-        },
-        {
-            'student_id': 'STU003',
-            'name': '鈴木一郎',
-            'birth_date': date(2008, 6, 30),
-            'gender': 'male',
-            'department': '情報科学科',
-            'grade': '3',
-        },
-        {
-            'student_id': 'STU004',
-            'name': '高橋花子',
-            'birth_date': date(2009, 7, 10),
-            'gender': 'female',
-            'department': '情報科学科',
-            'grade': '4',
-        },
-        {
-            'student_id': 'STU005',
-            'name': '伊藤太郎',
-            'birth_date': date(2010, 8, 15),
-            'gender': 'male',
-            'department': '情報科学科',
-            'grade': '5',
-        },
-        {
-            'student_id': 'STU006',
-            'name': '渡辺花子',
-            'birth_date': date(2011, 9, 25),
-            'gender': 'female',
-            'department': '情報科学科',
-            'grade': '6',
-        },
-        {
-            'student_id': 'STU007',
-            'name': '高橋一郎',
-            'birth_date': date(2012, 10, 5),
-            'gender': 'male',
-            'department': '情報科学科',
-            'grade': '7',
-        },
-        {
-            'student_id': 'STU008',
-            'name': '伊藤花子',
-            'birth_date': date(2013, 11, 18),
-            'gender': 'female',
-            'department': '情報科学科',
-            'grade': '8',
-        },
-        {
-            'student_id': 'STU009',
-            'name': '渡辺一郎',
-            'birth_date': date(2014, 12, 30),
-            'gender': 'male',
-            'department': '情報科学科',
-            'grade': '9',
-        },
-        {
-            'student_id': 'STU010',
-            'name': '高橋花子',
-            'birth_date': date(2015, 1, 20),
-            'gender': 'female',
-            'department': '情報科学科',
-            'grade': '10',
-        },
-    ]
+    clear_db()
 
-    
-    # テスト用教員データ
-    test_teachers = [
-        {
-            'teacher_id': 'TEA001',
-            'name': '鈴木教子',
-            'birth_date': date(1976, 3, 10),
-            'gender': 'male',
-            'department': '情報科学科',
-        },
-        {
-            'teacher_id': 'TEA002',
-            'name': '田中校長',
-            'birth_date': date(1968, 8, 25),
-            'gender': 'male',
-            'department': '情報科学科',
-        }
-    ]
-    
-    
-    # テスト用認証情報
-    test_credentials = [
-        {
-            'user_id': 'STU001',
-            'password': 'password123',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU002',
-            'password': 'password456',
-            'role':'student'
-        },
-        {
-            'user_id': 'TEA001',
-            'password': 'teacher123',
-            'role':'teacher'
-        },
-        {
-            'user_id': 'TEA002',
-            'password': 'teacher456',
-            'role':'teacher'
-        },
-        {
-            'user_id': 'admin',
-            'password': 'admin',
-            'role':'admin'
-        },
-        {
-            'user_id': 'STU003',
-            'password': 'password789',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU004',
-            'password': 'password101',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU005',
-            'password': 'password102',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU006',
-            'password': 'password103',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU007',
-            'password': 'password104',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU008',
-            'password': 'password105',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU009',
-            'password': 'password106',
-            'role':'student'
-        },
-        {
-            'user_id': 'STU010',
-            'password': 'password107',
-            'role':'student'
-        }
-    ]
-    
-    test_users = [
-        {
-            'user_id': 'STU001',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU002',
-            'role': 'student',
-        },
-        {
-            'user_id': 'TEA001',
-            'role': 'teacher',
-        },
-        {
-            'user_id': 'TEA002',
-            'role': 'teacher',
-        },
-        {
-            'user_id': 'STU003',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU004',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU005',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU006',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU007',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU008',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU009',
-            'role': 'student',
-        },
-        {
-            'user_id': 'STU010',
-            'role': 'student',
-        },
-        {
-            'user_id': 'admin',
-            'role': 'admin',
-        }
-    ]
-    
-    # =========================
-    # テスト用科目データ
-    # =========================
-    test_subjects = [
-        {
-            'name': 'プログラミング基礎',
-            'department': '情報科学科',
-            'category': 'required',
-            'grade': 1,
-            'credits': 2,
-            'day': '月',
-            'period': 1,
-        },
-        {
-            'name': 'データベース概論',
-            'department': '情報科学科',
-            'category': 'required',
-            'grade': 2,
-            'credits': 2,
-            'day': '火',
-            'period': 3,
-        },
-        {
-            'name': 'アルゴリズム',
-            'department': '情報科学科',
-            'category': 'required',
-            'grade': 2,
-            'credits': 3,
-            'day': '水',
-            'period': 2,
-        },
-        {
-            'name': 'Webアプリケーション開発',
-            'department': '情報科学科',
-            'category': 'elective',
-            'grade': 3,
-            'credits': 2,
-            'day': '木',
-            'period': 4,
-        },
-        {
-            'name': '人工知能入門',
-            'department': '情報科学科',
-            'category': 'elective',
-            'grade': 3,
-            'credits': 2,
-            'day': '金',
-            'period': 5,
-        },
-    ]
-    
-    for user_data in test_users:
-        User.create(**user_data)
-        print(f"✓ ユーザー作成: {user_data['user_id']} ({user_data['role']})")
-    
+    # 科目の生成
+    subjects = []
+    days = ["月", "火", "水", "木", "金"]
+    for i in range(subject_count):
+        sub = Subject.create(
+            name=f"{random.choice(SUBJECT_CORE)}{random.choice(SUBJECT_PREFIX)}",
+            department=random.choice(DEPARTMENTS),
+            category=random.choice(["required", "elective"]),
+            grade=random.randint(1, 4),
+            credits=random.choice([2, 4]),
+            day=random.choice(days),
+            period=random.randint(1, 5)
+        )
+        subjects.append(sub)
+    print(f"✓ 科目データを {subject_count} 件作成しました")
 
-    for subject_data in test_subjects:
-        Subject.create(**subject_data)
-        print(f"✓ 科目作成: {subject_data['name']} ({subject_data['day']}{subject_data['period']}限)")
+    # 教員の生成 (User -> Teacher -> Password)
+    for i in range(1, teacher_count + 1):
+        t_id = f"TEA{i:03d}"
+        gender = random.choice(['male', 'female'])
+        name = random.choice(LAST_NAMES) + (random.choice(FIRST_NAMES_MALE) if gender == 'male' else random.choice(FIRST_NAMES_FEMALE))
         
-    # 教員の作成
-    for teacher_data in test_teachers:
-        Teacher.create(**teacher_data)
-        print(f"✓ 教員作成: {teacher_data['teacher_id']} ({teacher_data['name']})")
-    
-    # 学生の作成
-    for student_data in test_students:
-        Student.create(**student_data)
-        print(f"✓ 学生作成: {student_data['student_id']} ({student_data['name']})")
+        User.create(user_id=t_id, role='teacher')
+        Teacher.create(
+            teacher_id=t_id,
+            name=name,
+            birth_date=get_random_date(1960, 1990),
+            gender=gender,
+            department=random.choice(DEPARTMENTS)
+        )
+        Password.create_password(user_id=t_id, role='teacher', raw_password="password123")
+    print(f"✓ 教員データを {teacher_count} 件作成しました")
 
-    
-    # 認証情報の作成
-    for cred_data in test_credentials:
-        Password.create_password(user_id=cred_data['user_id'], raw_password=cred_data['password'], role=cred_data['role'])
-        print(f"✓ 認証情報作成: {cred_data['user_id']}")
-    
-    
-    print("\n✅ データベース初期化が完了しました")
-    print("\nテストユーザー:")
-    print("【学生】")
-    print("1. STU001 (山田太郎) / password123")
-    print("2. STU002 (佐藤花子) / password456")
-    print("【教員】")
-    print("3. TEA001 (鈴木教子) / teacher123")
-    print("4. TEA002 (田中校長) / admin123 [管理者権限]")
+    # 学生の生成 (User -> Student -> Password)
+    student_ids = []
+    for i in range(1, student_count + 1):
+        s_id = f"STU{i:03d}"
+        student_ids.append(s_id)
+        gender = random.choice(['male', 'female', 'other'])
+        name = random.choice(LAST_NAMES) + (random.choice(FIRST_NAMES_MALE) if gender == 'male' else random.choice(FIRST_NAMES_FEMALE))
+        
+        User.create(user_id=s_id, role='student')
+        Student.create(
+            student_id=s_id,
+            name=name,
+            birth_date=get_random_date(2003, 2006),
+            gender=gender,
+            department=random.choice(DEPARTMENTS),
+            grade=str(random.randint(1, 4))
+        )
+        Password.create_password(user_id=s_id, role='student', raw_password="password123")
+    print(f"✓ 学生データを {student_count} 件作成しました")
 
-if __name__ == '__main__':
-    init_database()
+    # 履修登録と成績の生成
+    for s_id in student_ids:
+        # ランダムに2〜4科目を履修登録
+        enrolled_subs = random.sample(subjects, random.randint(2, 4))
+        for sub in enrolled_subs:
+            Enrollment.create(subject=sub, student_id=s_id)
+            
+            # 成績データの生成
+            Grade.create(
+                student_id=s_id,
+                subject_id=sub.id,
+                unit=sub.credits,
+                score=random.randint(0, 100)
+            )
+    print("✓ 履修登録と成績データをランダムに作成しました")
+
+    # 管理者アカウントの作成
+    if not User.get_or_none(User.user_id == 'admin'):
+        User.create(user_id='admin', role='admin')
+        Password.create_password(user_id='admin', role='admin', raw_password='admin')
+        print("✓ 管理者を作成しました")
+
+def parse_args():
+    """
+    コマンドライン引数を解析する
+    
+    Returns:
+        argparse.Namespace: 解析された引数
+    """
+    parser = argparse.ArgumentParser(description="データベース初期化")
+
+    parser.add_argument(
+        "--s",
+        type=int,
+        default=20,
+        help="学生の数（例: 20）"
+    )
+
+    parser.add_argument(
+        "--t",
+        type=int,
+        default=5,
+        help="教員の数（例: 5）"
+    )
+
+    parser.add_argument(
+        "--sb",
+        type=int,
+        default=12,
+        help="科目の数（例: 12）"
+    )
+
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    args = parse_args()
+    generate_random_data(student_count=args.s, teacher_count=args.t, subject_count=args.sb)
+    print("\n✅ データベースの初期化とランダム生成が完了しました")
