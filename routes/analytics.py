@@ -46,13 +46,45 @@ def _get_chart_by_student() -> dict:
     学生別の成績データを集計して返す。
     Returns:
         dict: {
-            学生ID,
-            各科目のscore,
-            メッセージ
-            
-        }。
+            labels: 科目名リスト,
+            scores: 評点リスト,
+            message: 分析メッセージ
+        }
     """
-    
+    from flask_login import current_user
+    from models.grade import Grade
+    from models.subject import Subject
+
+    # 学生ID取得（パラメータ優先、なければログインユーザー）
+    student_id = request.args.get("student_id")
+    if not student_id:
+        student_id = getattr(current_user, "student_id", None)
+        if not student_id:
+            return {"labels": [], "scores": [], "message": "学生IDが指定されていません。"}
+
+    # 成績データ取得
+    grades = Grade.select().where(Grade.student_id == student_id)
+    if not grades:
+        return {"labels": [], "scores": [], "message": "成績データがありません。"}
+
+    # 科目名取得用マップ
+    subject_map = {s.id: s.name for s in Subject.select()}
+
+    labels = []
+    scores = []
+    for g in grades:
+        labels.append(subject_map.get(g.subject_id, f"科目{g.subject_id}"))
+        scores.append(g.score)
+
+    print("labels:", labels)
+    print("scores:", scores)
+
+    print("student_id:", student_id)
+    grades = Grade.select().where(Grade.student_id == student_id)
+    print("grades:", list(grades))
+
+    message = f"{student_id}さんの成績分布"
+    return {"labels": labels, "scores": scores, "message": message}
 def _get_chart_by_subject() -> dict:
     """
     科目別の成績データを集計して返す。
@@ -80,14 +112,21 @@ def _get_chart_by_predict() -> dict:
     """
 
 
+
 @analytics_bp.get("/analytic")
 @login_required
 def analytic():
     """
     分析データを返す。
+    学生リストも渡す。
     """
+    from models.student import Student
     req_filter = request.args.get("filter", "all")
-    
+    student_id = request.args.get("student_id")
+
+    # 学生リスト取得
+    students = [s.to_dict() for s in Student.select()]
+
     if req_filter == "all":
         data = _get_chart_all()
     elif req_filter == "student":
@@ -96,10 +135,15 @@ def analytic():
         data = _get_chart_by_subject()
     elif req_filter == "predict":
         data = _get_chart_by_predict()
-    
+    else:
+        data = {}
+
     return render_template(
         "analytic/analytic.html",
         active_page='analytics',
         title=req_filter,
         data=data,
+        students=students,
+        selected_student_id=student_id,
+        req_filter=req_filter
     )
