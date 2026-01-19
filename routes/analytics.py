@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request, render_template
 from flask_login import login_required, current_user
-from collections import defaultdict
 from peewee import OperationalError
 
 from models import Grade, Subject, Student
@@ -131,7 +130,8 @@ def analytic():
     分析データを返す。
     学生リストも渡す。
     """
-    req_filter = request.args.get("filter", "all")
+    # フィルターパラメータを取得（学生ログイン時は自動的に"student"としてフィルターを適用）
+    req_filter = request.args.get("filter", "all") if current_user.role != 'student' else request.args.get("filter", "student")
     student_id = request.args.get("student_id")
 
     # 学生リスト取得
@@ -150,7 +150,6 @@ def analytic():
 
     # 学生名をテンプレートに渡す（学生ログイン時は必ずセット）
     student_name = ""
-    from flask_login import current_user
     if hasattr(current_user, 'role') and current_user.role == 'student':
         try:
             stu = Student.get(Student.student_id == current_user.user_id)
