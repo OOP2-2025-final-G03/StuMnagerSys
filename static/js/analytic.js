@@ -33,6 +33,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }]
   };
 
+  let chartStudentName = '';
+  if (window.studentName && window.studentName.trim() !== '') {
+    chartStudentName = window.studentName;
+  } else {
+    chartStudentName = 'あなた';
+  }
+  if (select && select.options.length > 0 && select.selectedIndex > 0) {
+    const selected = select.options[select.selectedIndex];
+    chartStudentName = selected.text.replace(/\(.+\)/, '').trim();
+  }
   new Chart(ctx, {
     type: 'doughnut',
     data: data,
@@ -44,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         title: {
           display: true,
-          text: window.chartData.message || '学生別成績分布'
+          text: `${chartStudentName}の成績分布`
         }
       }
     }
@@ -57,13 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const minIdx = window.chartData.scores.indexOf(Math.min(...window.chartData.scores));
     const best = window.chartData.labels[maxIdx];
     const worst = window.chartData.labels[minIdx];
-    // 学生名はセレクトボックスから取得
-    let studentName = '';
-    const select = document.getElementById('student-select');
-    if (select) {
-      const selected = select.options[select.selectedIndex];
-      studentName = selected.text.replace(/\(.+\)/, '').trim();
-    }
-    msgElem.textContent = `${studentName}は${best}が得意、${worst}が苦手です`;
+    msgElem.textContent = `${chartStudentName}は${best}が得意、${worst}が苦手です`;
   }
 });

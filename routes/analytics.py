@@ -55,12 +55,27 @@ def _get_chart_by_student() -> dict:
     from models.grade import Grade
     from models.subject import Subject
 
-    # 学生ID取得（パラメータ優先、なければログインユーザー）
+    # 学生ID取得（引数優先、なければリクエスト、なければログインユーザー）
     student_id = request.args.get("student_id")
     if not student_id:
-        student_id = getattr(current_user, "student_id", None)
+        student_id = getattr(current_user, "user_id", None)
         if not student_id:
             return {"labels": [], "scores": [], "message": "学生IDが指定されていません。"}
+
+        grades = Grade.select().where(Grade.student_id == student_id)
+        if not grades:
+            return {"labels": [], "scores": [], "message": "成績データがありません。"}
+
+        subject_map = {s.id: s.name for s in Subject.select()}
+        labels = []
+        scores = []
+        for g in grades:
+            labels.append(subject_map.get(g.subject_id, f"科目{g.subject_id}"))
+            scores.append(g.score)
+        # 学生は「あなた」固定
+        name = "あなた" if getattr(current_user, 'role', None) == 'student' else student_id
+        message = f"{name}の成績分布"
+        return {"labels": labels, "scores": scores, "message": message}
 
     # 成績データ取得
     grades = Grade.select().where(Grade.student_id == student_id)
@@ -83,7 +98,7 @@ def _get_chart_by_student() -> dict:
     grades = Grade.select().where(Grade.student_id == student_id)
     print("grades:", list(grades))
 
-    message = f"{student_id}さんの成績分布"
+    message = f"{student_id}の成績分布"
     return {"labels": labels, "scores": scores, "message": message}
 def _get_chart_by_subject() -> dict:
     """
@@ -112,7 +127,6 @@ def _get_chart_by_predict() -> dict:
     """
 
 
-
 @analytics_bp.get("/analytic")
 @login_required
 def analytic():
@@ -138,6 +152,18 @@ def analytic():
     else:
         data = {}
 
+    # 学生名をテンプレートに渡す（学生ログイン時は必ずセット）
+    student_name = ""
+    from flask_login import current_user
+    if hasattr(current_user, 'role') and current_user.role == 'student':
+        try:
+            stu = Student.get(Student.student_id == current_user.user_id)
+            student_name = stu.name if stu.name else "あなた"
+        except Exception:
+            student_name = "あなた"
+    elif isinstance(data, dict) and data.get("student_name"):
+        student_name = data["student_name"]
+
     return render_template(
         "analytic/analytic.html",
         active_page='analytics',
@@ -145,5 +171,6 @@ def analytic():
         data=data,
         students=students,
         selected_student_id=student_id,
-        req_filter=req_filter
+        req_filter=req_filter,
+        student_name=student_name
     )
