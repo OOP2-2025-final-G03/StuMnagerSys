@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify, request, render_template
-from flask_login import login_required
+from flask_login import login_required, current_user
 from collections import defaultdict
 from peewee import OperationalError
 
-from models import Grade, Subject
+from models import Grade, Subject, Student
 from utils import calculate_gpa, score_to_eval
 
 
@@ -51,9 +51,6 @@ def _get_chart_by_student() -> dict:
             message: 分析メッセージ
         }
     """
-    from flask_login import current_user
-    from models.grade import Grade
-    from models.subject import Subject
 
     # 学生ID取得（引数優先、なければリクエスト、なければログインユーザー）
     student_id = request.args.get("student_id")
@@ -91,12 +88,12 @@ def _get_chart_by_student() -> dict:
         labels.append(subject_map.get(g.subject_id, f"科目{g.subject_id}"))
         scores.append(g.score)
 
-    print("labels:", labels)
-    print("scores:", scores)
+    # print("labels:", labels)
+    # print("scores:", scores)
 
-    print("student_id:", student_id)
+    # print("student_id:", student_id)
     grades = Grade.select().where(Grade.student_id == student_id)
-    print("grades:", list(grades))
+    # print("grades:", list(grades))
 
     message = f"{student_id}の成績分布"
     return {"labels": labels, "scores": scores, "message": message}
@@ -134,7 +131,6 @@ def analytic():
     分析データを返す。
     学生リストも渡す。
     """
-    from models.student import Student
     req_filter = request.args.get("filter", "all")
     student_id = request.args.get("student_id")
 
