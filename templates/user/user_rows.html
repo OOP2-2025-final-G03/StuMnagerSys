@@ -1,0 +1,75 @@
+{% for user in users %}
+<tr>
+    {# --- ID: モデルに合わせて student_id / teacher_id を切り替え --- #}
+    <td style="font-family: monospace;">
+        {{ user.student_id if user.role == 'student' else user.teacher_id }}
+    </td>
+    
+    <td>
+        <div class="user-cell">
+            <div class="avatar-placeholder">{{ user.name[0] }}</div>
+            <span class="user-name-text">{{ user.name }}</span>
+        </div>
+    </td>
+    
+    <td>
+        <span class="role-badge {{ 'role-student' if user.role == 'student' else 'role-teacher' }}">
+            {{ '学生' if user.role == 'student' else '教員' }}
+        </span>
+    </td>
+    
+    {# --- 専攻 / 学科 の表示 --- #}
+    <td>
+        {{ user.department }}
+    </td>
+    
+    {# --- 生年月日 の表示 --- #}
+    <td>
+        <span style="color: #64748b;">{{ user.birth_date }}</span>
+    </td>
+    {# --- 性別 の表示 --- #}
+    <td>
+        <span style="color: #64748b;">{{ user.gender }}</span>
+    </td>
+    
+    {% if current_role == 'student' %}
+    <td>
+        <span style="color: #64748b;">{{ user.grade }}</span>
+    </td>
+    {% endif %}
+    {% if user_role == 'admin' %}
+        <td>
+            <div class="action-buttons">
+                {# ID引数を動的に設定 #}
+                {% set u_id = user.student_id if user.role == 'student' else user.teacher_id %}
+                
+                <a href="{{ url_for('user.edit', user_id=u_id) }}" class="action-link edit-link">
+                    編集
+                </a>
+                <form method="post"
+                    action="{{ url_for('user.delete_user', user_id=u_id) }}"
+                    style="display:inline;"
+                    onsubmit="return confirm('本当に削除しますか？')">
+                    <button class="action-link delete-link" type="submit">
+                        削除
+                    </button>
+                </form>
+            </div>
+        </td>
+    {% elif user_role == 'teacher' %}
+        <td>
+            <div class="action-buttons">
+                {# ID引数を動的に設定 #}
+                {% set u_id = user.student_id %}
+
+                <form method="post"
+                    action="{{ url_for('grade.create', user_id=u_id) }}">
+                    <button class="action-link edit-link" type="submit">
+                        成績管理
+                    </button>
+                </form>
+            </div>
+        </td>
+    {% endif %}
+</tr>
+{% endfor %}

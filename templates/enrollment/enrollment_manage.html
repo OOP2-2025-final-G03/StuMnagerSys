@@ -45,8 +45,7 @@
     <div>
       <h2 style="margin-bottom: 4px">【{{ subject.name }}】 履修者管理</h2>
       <p style="color: var(--text-sub); font-size: 0.9rem">
-        {# 表示を「1,2年」のように分かりやすく修正 #} 対象：{{ subject.grade
-        }}年生 / {{ subject.major }}
+        対象：{{ subject.grade }}年生 / {{ subject.major }}
       </p>
     </div>
 
@@ -120,8 +119,9 @@
             [{{ student.grade }}年{{ student.major }}] {{ student.student_id }}
             : {{ student.name }} {% if is_invalid %}
             <small style="color: #ef4444; margin-left: 5px; font-weight: bold">
-              ({% if grade_diff %}学年{% endif %}{% if grade_diff and major_diff
-              %}&{% endif %}{% if major_diff %}専攻{% endif %}対象外)
+              ({% if grade_diff %}学年{% endif %}
+              {% if grade_diff and major_diff %}&{% endif %}
+              {% if major_diff %}専攻{% endif %}対象外)
             </small>
             {% endif %}
           </span>
@@ -167,7 +167,7 @@
     </form>
   </div>
 
-  <div class="table-responsive">
+  <div class="table-responsive" id="scroll-container" style="max-height: 500px; overflow-y: auto;">
     <table class="styled-table">
       <thead>
         <tr>
@@ -178,16 +178,10 @@
           <th>状態</th>
         </tr>
       </thead>
-      <tbody>
-        {% if enrolled_students %} {% for st in enrolled_students %}
-        <tr>
-          <td style="font-family: monospace">{{ st.student_id }}</td>
-          <td>{{ st.name }}</td>
-          <td>{{ st.major }}</td>
-          <td>{{ st.grade }}年</td>
-          <td><span class="status-badge">履修中</span></td>
-        </tr>
-        {% endfor %} {% else %}
+      <tbody id="enrolled-table-body">
+        {% if enrolled_students %} 
+            {% include 'enrollment/enrollment_manage_rows.html' %}
+        {% else %}
         <tr>
           <td
             colspan="5"
@@ -201,4 +195,44 @@
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let offset = 50;
+let loading = false;
+let hasMore = {{ 'true' if has_more else 'false' }};
+const subjectId = "{{ subject.id }}";
+
+const container = document.getElementById('scroll-container');
+const tbody = document.getElementById('enrolled-table-body');
+
+container.addEventListener('scroll', async () => {
+    if (!hasMore || loading) return;
+
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+        loading = true;
+
+        const params = new URLSearchParams({
+            offset: offset
+        });
+
+        const res = await fetch(
+            `{{ url_for('subject.manage', subject_id=subject.id) }}?${params.toString()}`,
+            { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+        );
+
+        const html = await res.text();
+
+        if (!html.trim()) {
+            hasMore = false;
+            return;
+        }
+
+        tbody.insertAdjacentHTML('beforeend', html);
+        offset += 50;
+        loading = false;
+    }
+});
+</script>
 {% endblock %}

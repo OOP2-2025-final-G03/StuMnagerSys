@@ -56,7 +56,16 @@ def grade_list():
         query = query.where(Grade.score < 60)
 
     query = query.order_by(Grade.student_id.asc(), Grade.subject_id.asc())
-    grade_items = list(query)
+    
+    # --- ページネーション処理 ---
+    offset = int(request.args.get('offset', 0))
+    limit = 50
+
+    # SQLレベルで取得制限
+    grade_items = list(query.offset(offset).limit(limit))
+    
+    # 次のページがあるか簡易判定（取得数がlimitと同じならまだあるかも）
+    has_more = len(grade_items) >= limit
 
     subject_map = {s.id: s.name for s in Subject.select(Subject.id, Subject.name)}
 
@@ -71,6 +80,16 @@ def grade_list():
                 .where(User.user_id.in_(student_ids))
             )
             student_name_map = {st.student_id.user_id: st.name for st in rows}
+            
+    # AJAXリクエスト
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'grades/grade_rows.html',
+            items=grade_items,
+            subject_map=subject_map,
+            student_name_map=student_name_map,
+            is_student_view=is_student_view
+        )
 
     return render_template(
         'grades/grade_list.html',
@@ -80,6 +99,7 @@ def grade_list():
         subject_map=subject_map,
         student_name_map=student_name_map,
         is_student_view=is_student_view,
+        has_more=has_more,
     )
 
 
