@@ -1,8 +1,7 @@
-
 .analytic-card {
     background-color: var(--card-bg);
     border-radius: 24px;
-    padding: 32px; /* 与 content.css 的 dashboard-card 保持一致 */
+    padding: 32px;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border-light);
     
@@ -16,7 +15,6 @@
     opacity: 0;
     animation: fadeInUp 0.5s var(--anim-curve) forwards;
 }
-
 
 .filter-tabs {
     display: inline-flex;
@@ -52,13 +50,41 @@
     box-shadow: var(--shadow-md);
 }
 
+/* 学生選択フォームのスタイル追加 */
+#student-select-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+#student-select-form label {
+    font-weight: 500;
+    color: var(--text-sub);
+    font-size: 14px;
+}
+
+#student-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+
+#student-select:focus {
+    border-color: var(--active-bg);
+}
+
 .chart-container {
-    flex: 1;
     position: relative;
-    width: 100%;
-    min-height: 300px;
-    padding: 16px 0;
+    min-height: 350px; 
     
+    /* ローディングアニメーション */
     background: linear-gradient(
         90deg, 
         transparent 0%, 
@@ -66,7 +92,6 @@
         transparent 100%
     );
     background-size: 200% 100%;
-    animation: loading shimmer 1.5s infinite;
 }
 
 .chart-container.loaded {
@@ -80,31 +105,36 @@ canvas {
     display: block;
 }
 
-.message {
-    margin-top: auto;
-    padding: 20px 24px;
+.insight-message {
+    padding: 24px;
     background-color: var(--hover-bg);
     border-radius: 16px;
     border-left: 4px solid var(--text-main);
     transition: transform 0.2s var(--anim-curve);
+    
+    /* メッセージを垂直方向中央に配置 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-.message:hover {
+.insight-message:hover {
     transform: translateX(4px);
 }
 
-.message p {
+.insight-message p {
     margin: 0;
     color: var(--text-sub);
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.8;
     font-weight: 500;
 }
 
-.message p::before {
+.insight-message p::before {
     content: "💡"; 
     margin-right: 8px;
-    font-size: 16px;
+    font-size: 18px;
+    vertical-align: middle;
 }
 
 @media (max-width: 768px) {
@@ -124,7 +154,21 @@ canvas {
         padding: 8px 12px;
     }
 
+    /* モバイル用にHTMLのインラインFlexスタイルを上書きして縦並びにする */
+    .analytic-card > div[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 24px !important;
+    }
+
+    /* チャートコンテナの固定幅を解除 */
     .chart-container {
-        min-height: 250px;
+        width: 100% !important;
+        min-height: 300px;
+    }
+
+    .insight-message {
+        width: 100%;
+        min-width: auto !important;
     }
 }

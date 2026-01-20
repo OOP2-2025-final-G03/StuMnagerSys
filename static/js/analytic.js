@@ -1,3 +1,8 @@
+// Chart.jsで学生別成績ドーナツグラフを描画
+// chartDataはwindow.chartDataとして渡される
+
+console.log(window.chartData);
+
 document.addEventListener("DOMContentLoaded", function () {
   const chartData = window.chartData;
   const filter = window.reqFilter || "all";
@@ -7,13 +12,36 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  /* ===============================
+     学生選択時の挙動
+  =============================== */
+  const select = document.getElementById("student-select");
+  if (select) {
+    select.addEventListener("change", function () {
+      const studentId = select.value;
+      const params = new URLSearchParams(window.location.search);
+      params.set("filter", "student");
+      if (studentId) {
+        params.set("student_id", studentId);
+      } else {
+        params.delete("student_id");
+      }
+      window.location.search = params.toString();
+    });
+  }
+
   const canvas = document.getElementById("chart");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
   // --- データの準備とソート ---
   let labels = [...chartData.labels];
-  let dataPoints = [...chartData.data];
+
+  // scores / data 両対応（元コード互換）
+  let dataPoints =
+    chartData.data ??
+    chartData.scores ??
+    [];
 
   // 円グラフ（私の成績）の場合、点数が高い順にソート
   if (filter === "student") {
@@ -45,6 +73,18 @@ document.addEventListener("DOMContentLoaded", function () {
     options.scales.y.suggestedMax = 4.0;
   }
 
+  // --- 学生名取得（元コードのロジック保持） ---
+  let chartStudentName = "";
+  if (window.studentName && window.studentName.trim() !== "") {
+    chartStudentName = window.studentName;
+  } else {
+    chartStudentName = "あなた";
+  }
+  if (select && select.options.length > 0 && select.selectedIndex > 0) {
+    const selected = select.options[select.selectedIndex];
+    chartStudentName = selected.text.replace(/\(.+\)/, "").trim();
+  }
+
   // --- グラフの描画 ---
   new Chart(ctx, {
     type: chartType,
@@ -64,12 +104,38 @@ document.addEventListener("DOMContentLoaded", function () {
         },
       ],
     },
-    options: options,
+    options: {
+      ...options,
+      plugins: {
+        legend: {
+          position: filter === "student" ? "bottom" : "top",
+        },
+        title:
+          filter === "student"
+            ? {
+                display: true,
+                text: `${chartStudentName}の成績分布`,
+              }
+            : undefined,
+      },
+    },
   });
 
   // メッセージの更新
   const messageElement = document.getElementById("insight-message");
-  if (messageElement && chartData.message) {
+
+  // 得意・苦手科目メッセージ
+  if (
+    messageElement &&
+    filter === "student" &&
+    labels.length > 0
+  ) {
+    const maxIdx = dataPoints.indexOf(Math.max(...dataPoints));
+    const minIdx = dataPoints.indexOf(Math.min(...dataPoints));
+    const best = labels[maxIdx];
+    const worst = labels[minIdx];
+    messageElement.textContent = `${chartStudentName}は${best}が得意、${worst}が苦手です`;
+  } else if (messageElement && chartData.message) {
     messageElement.innerText = chartData.message;
   }
 });

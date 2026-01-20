@@ -29,7 +29,7 @@ block extra_css %}
     <p>現在の履修スケジュールです。</p>
   </div>
 
-  <div class="table-responsive">
+  <div class="table-responsive" id="scroll-container">
     <table class="styled-table">
       <thead>
         <tr>
@@ -39,23 +39,10 @@ block extra_css %}
           <th>開講日時</th>
         </tr>
       </thead>
-      <tbody>
-        {% if subjects %} {% for sub in subjects %}
-        <tr>
-          <td style="font-weight: 600; color: var(--primary-color)">
-            {{ sub.name }}
-          </td>
-          <td>
-            <span
-              class="category {{ 'category-required' if sub.category == 'required' else 'category-elective' }}"
-            >
-              {{ '必修' if sub.category == 'required' else '選択' }}
-            </span>
-          </td>
-          <td>{{ sub.credits }} 単位</td>
-          <td>{{ sub.day }}曜 {{ sub.period }}限</td>
-        </tr>
-        {% endfor %} {% else %}
+      <tbody id="enrollment-table-body">
+        {% if subjects|length > 0 %} 
+            {% include 'enrollment/enrollment_rows.html' %}
+        {% else %}
         <tr>
           <td
             colspan="4"
@@ -69,4 +56,44 @@ block extra_css %}
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let offset = 50;
+let loading = false;
+let hasMore = {{ 'true' if has_more else 'false' }};
+
+const container = document.getElementById('scroll-container');
+const tbody = document.getElementById('enrollment-table-body');
+
+container.addEventListener('scroll', async () => {
+    if (!hasMore || loading) return;
+
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+        loading = true;
+
+        // URLパラメータ生成
+        const params = new URLSearchParams({
+            offset: offset
+        });
+
+        const res = await fetch(
+            `{{ url_for('enrollments.index') }}?${params.toString()}`,
+            { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+        );
+
+        const html = await res.text();
+
+        if (!html.trim()) {
+            hasMore = false;
+            return;
+        }
+
+        tbody.insertAdjacentHTML('beforeend', html);
+        offset += 50;
+        loading = false;
+    }
+});
+</script>
 {% endblock %}

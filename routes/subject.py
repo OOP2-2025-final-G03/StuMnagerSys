@@ -41,12 +41,28 @@ def subject_list():
         return (d, p)
 
     sorted_subjects = sorted(subjects, key=sort_key)
+    
+    # --- ページネーション処理 ---
+    offset = int(request.args.get('offset', 0))
+    limit = 50
+    
+    # Pythonリストのスライスでページング
+    paged_subjects = sorted_subjects[offset : offset + limit]
+    has_more = (offset + limit) < len(sorted_subjects)
+
+    # AJAXリクエスト（スクロール時）の場合
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'subject/subject_rows.html',
+            subjects=paged_subjects,
+        )
 
     return render_template(
         'subject/subject_list.html',
         active_page='subjects',
         subjects=sorted_subjects,
         title='科目管理',
+        has_more=has_more,
     )
     
 @subject_bp.route('/create', methods=['GET', 'POST'])
@@ -155,12 +171,35 @@ def manage(subject_id):
     if not subject:
         return "科目が見つかりません", 404
 
-    # 2. 現在の履修者リストの取得
-    enrolled_students = Student.select().join(Enrollment, on=(Enrollment.student_id == Student.student_id)).where(Enrollment.subject_id == subject_id).dicts()
+    # 履修者リストのページネーション
+    offset = int(request.args.get('offset', 0))
+    limit = 50
 
-    # 3. 全学生リスト（追加用チェックボックス用）
-    all_students = Student.select().dicts()
+    # 履修者のクエリ構築
+    query_enrolled = (
+        Student
+        .select()
+        .join(Enrollment, on=(Enrollment.student_id == Student.student_id))
+        .where(Enrollment.subject_id == subject_id)
+        .order_by(Student.student_id)
+    )
+
+    # 現在のページのデータを取得
+    enrolled_students = list(query_enrolled.dicts().offset(offset).limit(limit))
     
+    # 次のページがあるか判定
+    has_more = len(enrolled_students) >= limit
+
+    # AJAXリクエスト
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'enrollment/enrollment_manage_rows.html',
+            enrolled_students=enrolled_students
+        )
+
+    # 初回ロード時のみ全学生リストを取得
+    # 注意: 全学生リストはフォーム機能のためページネーションせず全件取得します
+    all_students = Student.select().dicts()
 
     return render_template(
         'enrollment/enrollment_manage.html', 
@@ -168,6 +207,7 @@ def manage(subject_id):
         subject=subject, 
         enrolled_students=enrolled_students, 
         all_students=all_students, 
+        has_more=has_more,
     )
 
 @subject_bp.route('/my-list')

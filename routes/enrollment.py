@@ -34,12 +34,27 @@ def index():
         return (d, p)
 
     sorted_subjects = sorted(subjects, key=sort_key)
+    
+    # --- ページネーション処理---
+    offset = int(request.args.get('offset', 0))
+    limit = 50
+    
+    paged_subjects = sorted_subjects[offset : offset + limit]
+    has_more = (offset + limit) < len(sorted_subjects)
+
+    # AJAXリクエスト（スクロール時）の場合
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'enrollment/enrollment_rows.html',
+            subjects=paged_subjects
+        )
 
     return render_template(
         'enrollment/enrollment_list.html', 
         subjects=sorted_subjects, 
         role=role,
         active_page='enrollments', 
+        has_more=has_more
     )
 
 @enrollment_bp.route('/create', methods=['POST'])

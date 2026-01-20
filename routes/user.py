@@ -15,33 +15,50 @@ def user_list():
     管理者以外のアクセスは禁止されています。
     """
     filter_role = request.args.get('role', 'all')
-    
+    # 
+    offset = int(request.args.get('offset', 0))
+    limit = 50
 
     users = []
 
-    if filter_role == "student":
-        role_title = '学生'
-        students = Student.select()
-        users = [dict(s.to_dict(), role='student') for s in students]
-    elif filter_role == "teacher" and current_user.role == 'admin':
-        role_title = '教員  '
-        teachers = Teacher.select()
-        users = [dict(t.to_dict(), role='teacher') for t in teachers]
-    else:
-        role_title = '全体'
-        students = Student.select()
-        users = [dict(s.to_dict(), role='student') for s in students]
-        if current_user.role == 'admin':
-            teachers = Teacher.select()
-            users += [dict(t.to_dict(), role='teacher') for t in teachers]
+    # 学生
+    if filter_role in ('student', 'all'):
+        students = (
+            Student
+            .select()
+            .offset(offset)
+            .limit(limit)
+        )
+        users += [dict(s.to_dict(), role='student') for s in students]
 
-    
+    # 教員
+    if filter_role in ('teacher', 'all') and current_user.role == 'admin':
+        teachers = (
+            Teacher
+            .select()
+            .offset(offset)
+            .limit(limit)
+        )
+        users += [dict(t.to_dict(), role='teacher') for t in teachers]
+
+    # まだユーザーが残っているかどうか
+    has_more = len(users) >= limit
+
+    # リストだけ返す
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'user/user_rows.html',
+            users=users,
+            current_role=filter_role
+        )
 
     return render_template(
         "user/user_list.html",
         active_page='users',
-        title=role_title,
+        title=filter_role,
         users=users,
+        current_role=filter_role,
+        has_more=has_more
     )
 
 @users_bp.route('/search')

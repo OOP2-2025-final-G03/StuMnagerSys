@@ -4,7 +4,7 @@ from collections import defaultdict
 from peewee import OperationalError, fn
 
 from models import Grade, Subject, Student
-from utils import calculate_gpa
+from utils import calculate_gpa, score_to_eval
 
 
 analytics_bp = Blueprint("analytic", __name__, url_prefix="/analytic")
@@ -33,27 +33,8 @@ def _get_chart_all() -> dict:
             以上各GPA範囲の人数の分布
         }。
     """
-    # 全学生のIDを取得
-    all_students = Student.select()
-    
-    # GPAの範囲ごとの人数を初期化
-    # 0.0~0.5, 0.5~1.0, ..., 3.5~4.0
-    bins = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
-    labels = [f"{b}~{round(b+0.5, 1)}" for b in bins[:-1]]
-    counts = [0] * len(labels)
-    
-    for s in all_students:
-        sid = s.student_id.user_id if hasattr(s.student_id, 'user_id') else s.student_id
-        gpa = calculate_gpa(sid)
-        for i in range(len(bins)-1):
-            if bins[i] <= gpa < bins[i+1] or (i == len(bins)-2 and gpa == 4.0):
-                counts[i] += 1
-                break
-                
     return {
-        "labels": labels,
-        "data": counts,
-        "message": "全学生のGPA分布を表示しています。"
+        
     }
     
     
@@ -62,33 +43,58 @@ def _get_chart_by_student() -> dict:
     学生別の成績データを集計して返す。
     Returns:
         dict: {
-            学生ID,
-            各科目のscore,
-            メッセージ
-            
-        }。
+            labels: 科目名リスト,
+            scores: 評点リスト,
+            message: 分析メッセージ
+        }
     """
-    subject_map = _load_subject_name_map()
-    uid = current_user.get_id()
-    
-    # 学生が自分自身を見る場合を想定
-    grades = Grade.select().where(Grade.student_id == uid)
-    
-    data_map = {subject_map.get(g.subject_id, f"科目{g.subject_id}"): g.score for g in grades}
-    
-    # メッセージの生成（最高・最低評価の抽出）
-    message = "データがありません。"
-    if data_map:
-        max_sub = max(data_map, key=data_map.get)
-        min_sub = min(data_map, key=data_map.get)
-        message = f"あなたは{min_sub}が苦手、{max_sub}が得意です。"
 
-    return {
-        "labels": list(data_map.keys()),
-        "data": list(data_map.values()),
-        "message": message
-    }
-    
+    # 学生ID取得（引数優先、なければリクエスト、なければログインユーザー）
+    student_id = request.args.get("student_id")
+    if not student_id:
+        student_id = getattr(current_user, "user_id", None)
+        if not student_id:
+            return {"labels": [], "data": [], "message": "学生IDが指定されていません。"}
+
+        grades = Grade.select().where(Grade.student_id == student_id)
+        if not grades:
+            return {"labels": [], "data": [], "message": "成績データがありません。"}
+
+        subject_map = {s.id: s.name for s in Subject.select()}
+        labels = []
+        scores = []
+        for g in grades:
+            labels.append(subject_map.get(g.subject_id, f"科目{g.subject_id}"))
+            scores.append(g.score)
+        # 学生は「あなた」固定
+        name = "あなた" if getattr(current_user, 'role', None) == 'student' else student_id
+        message = f"{name}の成績分布"
+        return {"labels": labels, "data": scores, "message": message}
+
+    # 成績データ取得
+    grades = Grade.select().where(Grade.student_id == student_id)
+    if not grades:
+        return {"labels": [], "data": [], "message": "成績データがありません。"}
+
+    # 科目名取得用マップ
+    subject_map = {s.id: s.name for s in Subject.select()}
+
+    labels = []
+    scores = []
+    for g in grades:
+        labels.append(subject_map.get(g.subject_id, f"科目{g.subject_id}"))
+        scores.append(g.score)
+
+    # print("labels:", labels)
+    # print("scores:", scores)
+
+    # print("student_id:", student_id)
+    grades = Grade.select().where(Grade.student_id == student_id)
+    # print("grades:", list(grades))
+
+    message = f"{student_id}の成績分布"
+    return {"labels": labels, "data": scores, "message": message}
+
 def _get_chart_by_subject() -> dict:
     """
     科目別の成績データを集計して返す。
@@ -131,37 +137,25 @@ def _get_chart_by_predict() -> dict:
             メッセージ
         }。
     """
-    all_students = Student.select()
-    uids = [s.student_id.user_id if hasattr(s.student_id, 'user_id') else s.student_id for s in all_students]
-    # 全体平均GPAの計算
-    all_gpas = [calculate_gpa(uid) for uid in uids]
-    avg_total_gpa = sum(all_gpas) / len(all_gpas) if all_gpas else 0
-    
-    # 自分のGPA
-    my_gpa = calculate_gpa(current_user.get_id())
-    
-    # 予測式に基づいた計算
-    predicted_gpa = avg_total_gpa + (my_gpa - avg_total_gpa)
-    # GPAの範囲(0~4)にクランプ
-    predicted_gpa = max(0.0, min(4.0, round(predicted_gpa, 2)))
-
     return {
-        "labels": ["全体平均", "あなたのGPA", "予測GPA"],
-        "data": [round(avg_total_gpa, 2), round(my_gpa, 2), predicted_gpa],
-        "message": f"現在の傾向に基づくと、次学期の予測GPAは {predicted_gpa} です。"
+        
     }
 
 
 @analytics_bp.get("/")
 @login_required
-def analytic():  # 関数名を analytic に戻す
-    req_filter = request.args.get("filter", "all")
-    
-    # 学生の場合はデフォルトを 'student' に
-    if current_user.role == 'student' and req_filter == 'all':
-        req_filter = 'student'
-    
-    # フィルタに応じたデータ取得
+def analytic():
+    """
+    分析データを返す。
+    学生リストも渡す。
+    """
+    # フィルターパラメータを取得（学生ログイン時は自動的に"student"としてフィルターを適用）
+    req_filter = request.args.get("filter", "all") if current_user.role != 'student' else request.args.get("filter", "student")
+    student_id = request.args.get("student_id")
+
+    # 学生リスト取得
+    students = [s.to_dict() for s in Student.select()]
+
     if req_filter == "all":
         data = _get_chart_all()
     elif req_filter == "student":
@@ -172,14 +166,27 @@ def analytic():  # 関数名を analytic に戻す
         data = _get_chart_by_predict()
     else:
         data = {"labels": [], "data": [], "message": ""}
-    
+
+    # 学生名をテンプレートに渡す（学生ログイン時は必ずセット）
+    student_name = ""
+    if hasattr(current_user, 'role') and current_user.role == 'student':
+        try:
+            stu = Student.get(Student.student_id == current_user.user_id)
+            student_name = stu.name if stu.name else "あなた"
+        except Exception:
+            student_name = "あなた"
+    elif isinstance(data, dict) and data.get("student_name"):
+        student_name = data["student_name"]
+
     return render_template(
         "analytic/analytic.html",
-        active_template=f"dashboard/{current_user.role}.html",
         active_page='analytics',
         req_filter=req_filter,
-        user_role=current_user.role,
         analysis_message=data.get("message"),
         data=data,
-        title=f"成績分析 - {req_filter}"
+        title=f"成績分析 - {req_filter}",
+        students=students,
+        selected_student_id=student_id,
+        req_filter=req_filter,
+        student_name=student_name
     )

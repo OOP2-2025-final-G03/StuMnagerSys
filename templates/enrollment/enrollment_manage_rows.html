@@ -1,0 +1,9 @@
+{% for st in enrolled_students %}
+<tr>
+  <td style="font-family: monospace">{{ st.student_id }}</td>
+  <td>{{ st.name }}</td>
+  <td>{{ st.major }}</td>
+  <td>{{ st.grade }}年</td>
+  <td><span class="status-badge">履修中</span></td>
+</tr>
+{% endfor %}
