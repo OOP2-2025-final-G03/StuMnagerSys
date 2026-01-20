@@ -16,8 +16,12 @@
 {% block page_title %}成績管理{% endblock %}
 
 {% block main_content %}
-    {# grades.py から渡される is_student_view があれば優先。無ければ従来通り current_user で判定 #}
     {% set is_student_view = is_student_view if is_student_view is defined else (current_user.is_authenticated and current_user.role == 'student') %}
+    {% set current_filter = request.args.get('filter', 'all') %}
+    {% set current_student_number = request.args.get('student_number', '') %}
+    {% set current_subject = request.args.get('subject', '') %}
+    {% set current_view = request.args.get('view', 'list') %}
+    {% set mv = motivation_value if motivation_value is defined and motivation_value is not none else 50 %}
 
     <div class="list-card">
 
@@ -26,20 +30,19 @@
             <p>成績を管理します。</p>
         </div>
 
-        {% set current_filter = request.args.get('filter', 'all') %}
-        {% set current_student_number = request.args.get('student_number', '') %}
-        {% set current_subject = request.args.get('subject', '') %}
-
         <div class="filter-tabs">
             {% if is_student_view %}
-                <a href="{{ url_for('grade.grade_list', filter='all', subject=current_subject) }}"
-                   class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
+                <a href="{{ url_for('grade.grade_list', filter='all', subject=current_subject, view='list') }}"
+                   class="filter-tab {{ 'active' if (current_filter == 'all' and current_view == 'list') else '' }}">すべて</a>
 
-                <a href="{{ url_for('grade.grade_list', filter='pass', subject=current_subject) }}"
-                   class="filter-tab {{ 'active' if current_filter == 'pass' else '' }}">合格</a>
+                <a href="{{ url_for('grade.grade_list', filter='pass', subject=current_subject, view='list') }}"
+                   class="filter-tab {{ 'active' if (current_filter == 'pass' and current_view == 'list') else '' }}">合格</a>
 
-                <a href="{{ url_for('grade.grade_list', filter='fail', subject=current_subject) }}"
-                   class="filter-tab {{ 'active' if current_filter == 'fail' else '' }}">不合格</a>
+                <a href="{{ url_for('grade.grade_list', filter='fail', subject=current_subject, view='list') }}"
+                   class="filter-tab {{ 'active' if (current_filter == 'fail' and current_view == 'list') else '' }}">不合格</a>
+
+                <a href="{{ url_for('grade.grade_list', filter=current_filter, subject=current_subject, view='motivation') }}"
+                   class="filter-tab {{ 'active' if current_view == 'motivation' else '' }}">今後の頑張り</a>
             {% else %}
                 <a href="{{ url_for('grade.grade_list', filter='all', student_number=current_student_number, subject=current_subject) }}"
                    class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">すべて</a>
@@ -52,141 +55,209 @@
             {% endif %}
         </div>
 
-        <div class="list-actions">
-            <div class="search-box" style="max-width: none;">
-                <form method="GET" action="{{ url_for('grade.grade_list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
-                    {% if not is_student_view %}
-                        <input type="text"
-                               name="student_number"
-                               value="{{ current_student_number }}"
-                               placeholder="学籍番号で検索（例: K24039）"
-                               style="flex:1; min-width: 220px;">
-                    {% endif %}
+        {% if is_student_view and current_view == 'motivation' %}
+            <!-- 今後の頑張り（生徒のみ） -->
+            <div style="margin-top: 16px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px;">
+                <h3 style="margin: 0 0 8px 0;">今後の学習のやる気</h3>
+                <p style="margin: 0 0 14px 0; color: #64748b;">
+                    以下のスライダーで「これからどれくらい頑張るか」を設定してください（0〜100）。
+                </p>
 
-                    <input type="text"
-                           name="subject"
-                           value="{{ current_subject }}"
-                           placeholder="科目名 または 科目IDで検索（例: 数学 / 12）"
-                           style="flex:1; min-width: 220px;">
+                <div style="display:flex; align-items:center; gap:14px; flex-wrap: wrap;">
+                    <input type="range"
+                           id="motivation_range"
+                           min="0" max="100" step="1"
+                           value="{{ mv }}"
+                           style="flex:1; min-width: 240px;">
 
-                    <input type="hidden" name="filter" value="{{ current_filter }}">
+                    <div style="min-width: 140px; font-family: monospace;">
+                        やる気値: <span id="motivation_value">{{ mv }}</span>
+                    </div>
 
-                    <button type="submit" class="btn-add">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M21 21l-4.35-4.35"></path>
-                            <circle cx="11" cy="11" r="7"></circle>
-                        </svg>
-                        検索
-                    </button>
-                </form>
+                    <div id="motivation_status" style="min-width: 160px; color:#64748b;"></div>
+                </div>
             </div>
 
-            {% if not is_student_view %}
-                <a href="{{ url_for('grade.create') }}" class="btn-add">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M12 5v14M5 12h14"></path>
-                    </svg>
-                    新規登録
-                </a>
-            {% endif %}
-        </div>
+            <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const range = document.getElementById('motivation_range');
+                const valueSpan = document.getElementById('motivation_value');
+                const status = document.getElementById('motivation_status');
+                if (!range || !valueSpan || !status) return;
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div>
-                    {% for category, message in messages %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
+                const saveUrl = "{{ url_for('grade.motivation') }}";
+                let timer = null;
+
+                const save = async (val) => {
+                    status.textContent = '保存中...';
+                    try {
+                        const res = await fetch(saveUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ value: val })
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok || !data.ok) throw new Error('save failed');
+
+                        status.textContent = '保存しました';
+                        setTimeout(() => { status.textContent = ''; }, 1200);
+                    } catch (e) {
+                        status.textContent = '保存に失敗しました';
+                    }
+                };
+
+                range.addEventListener('input', () => {
+                    valueSpan.textContent = range.value;
+                });
+
+                range.addEventListener('change', () => {
+                    const val = parseInt(range.value, 10);
+                    if (timer) clearTimeout(timer);
+                    timer = setTimeout(() => save(val), 250);
+                });
+            });
+            </script>
+
+        {% else %}
+            <!-- 一覧（通常表示） -->
+            <div class="list-actions">
+                <div class="search-box" style="max-width: none;">
+                    <form method="GET" action="{{ url_for('grade.grade_list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
+                        {% if not is_student_view %}
+                            <input type="text"
+                                   name="student_number"
+                                   value="{{ current_student_number }}"
+                                   placeholder="学籍番号で検索（例: K24039）"
+                                   style="flex:1; min-width: 220px;">
+                        {% endif %}
+
+                        <input type="text"
+                               name="subject"
+                               value="{{ current_subject }}"
+                               placeholder="科目名 または 科目IDで検索（例: 数学 / 12）"
+                               style="flex:1; min-width: 220px;">
+
+                        <input type="hidden" name="filter" value="{{ current_filter }}">
+
+                        <button type="submit" class="btn-add">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 21l-4.35-4.35"></path>
+                                <circle cx="11" cy="11" r="7"></circle>
+                            </svg>
+                            検索
+                        </button>
+                    </form>
                 </div>
-            {% endif %}
-        {% endwith %}
 
-        <div class="table-responsive">
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        {% if not is_student_view %}
-                            <th width="140">学籍番号</th>
-                            <th width="160">氏名</th>
-                        {% endif %}
-                        <th>科目（科目ID）</th>
-                        <th width="80">単位</th>
-                        <th width="110">評価（0〜4）</th>
-                        <th>ステータス</th>
-                        {% if not is_student_view %}
-                            <th width="160">操作</th>
-                        {% endif %}
-                    </tr>
-                </thead>
+                {% if not is_student_view %}
+                    <a href="{{ url_for('grade.create') }}" class="btn-add">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                        新規登録
+                    </a>
+                {% endif %}
+            </div>
 
-                <tbody>
-                    {% set grade_items = items if items is defined else grades %}
-                    {% if grade_items and grade_items|length > 0 %}
-                        {% for g in grade_items %}
-                        <tr>
-                            {% if not is_student_view %}
-                                <td style="font-family: monospace;">{{ g.student_id }}</td>
-                                <td>{{ student_name_map.get(g.student_id, '') }}</td>
-                            {% endif %}
-
-                            {# 科目名（科目ID）表示 #}
-                            {% set sub_name = subject_map.get(g.subject_id) if subject_map is defined else None %}
-                            <td>
-                                {% if sub_name %}
-                                    {{ sub_name }}（{{ g.subject_id }}）
-                                {% else %}
-                                    {{ g.subject_id }}
-                                {% endif %}
-                            </td>
-
-                            <td>{{ g.unit }}</td>
-                            <td>{{ score_to_rank(g.score) }}</td>
-
-                            <td>
-                                {% set is_pass = (g.score >= 60) %}
-                                <span class="status-badge {{ 'status-active' if is_pass else 'status-inactive' }}">
-                                    {{ '合格' if is_pass else '不合格' }}
-                                </span>
-                            </td>
-
-                            {% if not is_student_view %}
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="{{ url_for('grade.edit', student_number=g.student_id, subject_id=g.subject_id) }}"
-                                       class="action-link edit-link">
-                                        <svg style="margin-right:4px;" width="14" height="14" fill="none"
-                                             stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
-                                        編集
-                                    </a>
-
-                                    <a href="{{ url_for('grade.delete', student_number=g.student_id, subject_id=g.subject_id) }}"
-                                       class="action-link delete-link"
-                                       onclick="return confirm('この成績を削除しますか？');">
-                                        <svg style="margin-right:4px;" width="14" height="14" fill="none"
-                                             stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        </svg>
-                                        削除
-                                    </a>
-                                </div>
-                            </td>
-                            {% endif %}
-                        </tr>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div>
+                        {% for category, message in messages %}
+                            <p>{{ message }}</p>
                         {% endfor %}
-                    {% else %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="table-responsive">
+                <table class="styled-table">
+                    <thead>
                         <tr>
-                            <td colspan="{{ 4 if is_student_view else 7 }}" style="text-align: center; padding: 40px; color: #94a3b8;">
-                                データが見つかりませんでした。
-                            </td>
+                            {% if not is_student_view %}
+                                <th width="140">学籍番号</th>
+                                <th width="160">氏名</th>
+                            {% endif %}
+                            <th>科目（科目ID）</th>
+                            <th width="80">単位</th>
+                            <th width="110">評価（0〜4）</th>
+                            <th>ステータス</th>
+                            {% if not is_student_view %}
+                                <th width="160">操作</th>
+                            {% endif %}
                         </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+
+                    <tbody>
+                        {% set grade_items = items if items is defined else grades %}
+                        {% if grade_items and grade_items|length > 0 %}
+                            {% for g in grade_items %}
+                            <tr>
+                                {% if not is_student_view %}
+                                    <td style="font-family: monospace;">{{ g.student_id }}</td>
+                                    <td>{{ student_name_map.get(g.student_id, '') }}</td>
+                                {% endif %}
+
+                                {% set sub_name = subject_map.get(g.subject_id) if subject_map is defined else None %}
+                                <td>
+                                    {% if sub_name %}
+                                        {{ sub_name }}（{{ g.subject_id }}）
+                                    {% else %}
+                                        {{ g.subject_id }}
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ g.unit }}</td>
+                                <td>{{ score_to_rank(g.score) }}</td>
+
+                                <td>
+                                    {% set is_pass = (g.score >= 60) %}
+                                    <span class="status-badge {{ 'status-active' if is_pass else 'status-inactive' }}">
+                                        {{ '合格' if is_pass else '不合格' }}
+                                    </span>
+                                </td>
+
+                                {% if not is_student_view %}
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('grade.edit', student_number=g.student_id, subject_id=g.subject_id) }}"
+                                           class="action-link edit-link">
+                                            <svg style="margin-right:4px;" width="14" height="14" fill="none"
+                                                 stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                            編集
+                                        </a>
+
+                                        <a href="{{ url_for('grade.delete', student_number=g.student_id, subject_id=g.subject_id) }}"
+                                           class="action-link delete-link"
+                                           onclick="return confirm('この成績を削除しますか？');">
+                                            <svg style="margin-right:4px;" width="14" height="14" fill="none"
+                                                 stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                            削除
+                                        </a>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="{{ 4 if is_student_view else 7 }}" style="text-align: center; padding: 40px; color: #94a3b8;">
+                                    データが見つかりませんでした。
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
 
     </div>
 {% endblock %}

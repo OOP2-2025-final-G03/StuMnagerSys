@@ -55,8 +55,13 @@ def grades_root():
 def legacy_grade_list():
     return redirect(url_for("grade.grade_list"))
 
+@app.route('/analysis')
+def analysis_root():
+    return redirect(url_for('analysis.analysis_list'))
+
+
 if __name__ == '__main__':
     # データベースの初期化
-    # initialize_database()
+    initialize_database()
     
     app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)
