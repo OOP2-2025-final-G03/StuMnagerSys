@@ -130,8 +130,8 @@ document.addEventListener("DOMContentLoaded", function () {
           data: dataPoints,
           backgroundColor: filter === "all" 
             ? [
-                '#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', 
-                '#9966FF', '#FF9F40', '#C9CBCF', '#4e73df'
+                '#dc212164', '#e1626263', '#f58a6083', '#acaf3c6d', 
+                '#bcc53c7a', '#c6f43c77', '#d7ff0d82', '#48ff008c'
               ]
             : getColorsByFilter(filter, dataPoints.length),
           borderColor: filter === "predict" ? "#4e73df" : "#ffffff",
