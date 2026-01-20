@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, render_template
 from flask_login import login_required, current_user
-from peewee import OperationalError
+from collections import defaultdict
+from peewee import OperationalError, fn
 
 from models import Grade, Subject, Student
 from utils import calculate_gpa, score_to_eval
@@ -13,16 +14,10 @@ def _load_subject_name_map() -> dict[int, str]:
     subject テーブルが存在する場合だけ {subject_id: subject_name} を返す。
     無い/壊れている場合は空dictを返す（= 科目名は '科目{ID}' にfallback）。
     """
-    if Subject is None:
-        return {}
-
     try:
-        # subject テーブルが無いとここで OperationalError
-        rows = Subject.select(Subject.subject_id, Subject.subject_name)
-        return {int(r.subject_id): str(r.subject_name) for r in rows}
-    except OperationalError:
-        return {}
-    except Exception:
+        rows = Subject.select(Subject.id, Subject.name)
+        return {int(r.id): str(r.name) for r in rows}
+    except (OperationalError, Exception):
         return {}
     
 def _get_chart_all() -> dict:
@@ -38,6 +33,9 @@ def _get_chart_all() -> dict:
             以上各GPA範囲の人数の分布
         }。
     """
+    return {
+        
+    }
     
     
 def _get_chart_by_student() -> dict:
@@ -46,7 +44,7 @@ def _get_chart_by_student() -> dict:
     Returns:
         dict: {
             labels: 科目名リスト,
-            scores: 評点リスト,
+            data: 評点リスト,
             message: 分析メッセージ
         }
     """
@@ -56,13 +54,13 @@ def _get_chart_by_student() -> dict:
     if not student_id:
         student_id = getattr(current_user, "user_id", None)
         if not student_id:
-            return {"labels": [], "scores": [], "message": "学生IDが指定されていません。"}
+            return {"labels": [], "data": [], "message": "学生IDが指定されていません。"}
 
         grades = Grade.select().where(Grade.student_id == student_id)
         if not grades:
-            return {"labels": [], "scores": [], "message": "成績データがありません。"}
+            return {"labels": [], "data": [], "message": "成績データがありません。"}
 
-        subject_map = {s.id: s.name for s in Subject.select()}
+        subject_map = _load_subject_name_map()
         labels = []
         scores = []
         for g in grades:
@@ -70,16 +68,16 @@ def _get_chart_by_student() -> dict:
             scores.append(g.score)
         # 学生は「あなた」固定
         name = "あなた" if getattr(current_user, 'role', None) == 'student' else student_id
-        message = f"{name}の成績分布"
-        return {"labels": labels, "scores": scores, "message": message}
+        message = None
+        return {"labels": labels, "data": scores, "message": message}
 
     # 成績データ取得
     grades = Grade.select().where(Grade.student_id == student_id)
     if not grades:
-        return {"labels": [], "scores": [], "message": "成績データがありません。"}
+        return {"labels": [], "data": [], "message": "成績データがありません。"}
 
     # 科目名取得用マップ
-    subject_map = {s.id: s.name for s in Subject.select()}
+    subject_map = _load_subject_name_map()
 
     labels = []
     scores = []
@@ -94,20 +92,39 @@ def _get_chart_by_student() -> dict:
     grades = Grade.select().where(Grade.student_id == student_id)
     # print("grades:", list(grades))
 
-    message = f"{student_id}の成績分布"
-    return {"labels": labels, "scores": scores, "message": message}
+    message = None
+    return {"labels": labels, "data": scores, "message": message}
+
 def _get_chart_by_subject() -> dict:
     """
     科目別の成績データを集計して返す。
     Returns:
         dict: {
-            全科目の平均score,
-            全科目ID,
-            メッセージ
+            "labels": 科目名リスト,
+            "data": 全科目の平均評点,
+            "message": メッセージ
         }。
     """
+    subject_map = _load_subject_name_map()
+    
+    # 教師権限等を想定し、科目ごとの全体平均を計算
+    query = (Grade
+             .select(Grade.subject_id, fn.AVG(Grade.score).alias('avg_score'))
+             .group_by(Grade.subject_id))
+    
+    avg_map = {subject_map.get(q.subject_id, f"科目{q.subject_id}"): round(float(q.avg_score), 1) for q in query}
 
+    message = "成績データがありません。"
+    if avg_map:
+        max_sub = max(avg_map, key=avg_map.get)
+        min_sub = min(avg_map, key=avg_map.get)
+        message = f"全体では{min_sub}が平均的に低く({avg_map[min_sub]}点)、{max_sub}が高い傾向にあります({avg_map[max_sub]}点)。"
+        message += f"   - 全体の平均点は{sum(avg_map.values()) / len(avg_map):.1f}点です。"
 
+    return {"labels": list(avg_map.keys()), 
+            "data": list(avg_map.values()), 
+            "message": message
+            }
 
 def _get_chart_by_predict() -> dict:
     """
@@ -121,9 +138,12 @@ def _get_chart_by_predict() -> dict:
             メッセージ
         }。
     """
+    return {
+        
+    }
 
 
-@analytics_bp.get("/analytic")
+@analytics_bp.get("/")
 @login_required
 def analytic():
     """
@@ -162,10 +182,10 @@ def analytic():
     return render_template(
         "analytic/analytic.html",
         active_page='analytics',
-        title=req_filter,
+        req_filter=req_filter,
+        analysis_message=data.get("message"),
         data=data,
         students=students,
         selected_student_id=student_id,
-        req_filter=req_filter,
         student_name=student_name
     )
