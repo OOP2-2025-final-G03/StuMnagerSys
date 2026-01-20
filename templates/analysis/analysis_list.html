@@ -1,0 +1,78 @@
+{% extends active_template %}
+
+{% block page_title %}成績分析{% endblock %}
+
+{% block main_content %}
+<div class="list-card">
+  <div class="list-header">
+    <h2>{{ title }}</h2>
+    <p>得意科目：GPA 3以上（平均点80以上）／ 苦手科目：GPA 2以下（平均点79以下）</p>
+  </div>
+
+  <!-- 得意科目 -->
+  <div style="margin-top: 16px;">
+    <h3 style="margin: 0 0 10px 0;">得意科目</h3>
+    <div class="table-responsive">
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th>科目名</th>
+            <th width="120">単位数</th>
+            <th width="90">GPA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if strong_items and strong_items|length > 0 %}
+            {% for r in strong_items %}
+              <tr>
+                <td>{{ r.subject_name }}</td>
+                <td>{{ r.credits }}</td>
+                <td>{{ r.gpa }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="3" style="text-align:center; padding: 30px; color: #94a3b8;">
+                該当する得意科目がありません。
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 苦手科目 -->
+  <div style="margin-top: 22px;">
+    <h3 style="margin: 0 0 10px 0;">苦手科目</h3>
+    <div class="table-responsive">
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th>科目名</th>
+            <th width="120">単位数</th>
+            <th width="90">GPA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if weak_items and weak_items|length > 0 %}
+            {% for r in weak_items %}
+              <tr>
+                <td>{{ r.subject_name }}</td>
+                <td>{{ r.credits }}</td>
+                <td>{{ r.gpa }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="3" style="text-align:center; padding: 30px; color: #94a3b8;">
+                該当する苦手科目がありません。
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

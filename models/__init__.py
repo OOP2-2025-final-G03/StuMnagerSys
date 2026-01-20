@@ -5,6 +5,7 @@ from .subject import Subject
 from .grade import Grade
 from .user import User
 from .enrollment import Enrollment
+from .motivation import Motivation  
 
 from utils import db
 
@@ -15,7 +16,8 @@ MODELS = [
     Subject,
     Grade,
     User,
-    Enrollment
+    Enrollment,
+    Motivation,
 ]
 
 __all__ = [
@@ -25,12 +27,14 @@ __all__ = [
     "Subject",
     "Grade",
     "User",
-    "Enrollment"
+    "Enrollment",
+    "Motivation",
 ]
+
 def create_admin_user():
     User.get_or_create(user_id='admin', defaults={'role': 'admin'})
     Password.create_password(user_id='admin', raw_password='admin', role='admin')
-    
+
 # データベースの初期化
 def initialize_database():
     db.connect()
