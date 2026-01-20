@@ -27,7 +27,7 @@ def _get_chart_all() -> dict:
     Returns:
         dict: {
             labels: GPA範囲のラベルリスト,
-            scores: 各GPA範囲の学生数,
+            data: 各GPA範囲の学生数,
             message: 分析メッセージ
         }。
     """
@@ -35,7 +35,7 @@ def _get_chart_all() -> dict:
     # 全学生を取得
     students = Student.select()
     if not students:
-        return {"labels": [], "scores": [], "message": "学生データがありません。"}
+        return {"labels": [], "data": [], "message": "学生データがありません。"}
     
     # GPA範囲ごとの学生数を集計
     gpa_buckets = {
@@ -84,7 +84,7 @@ def _get_chart_all() -> dict:
     avg_gpa = round(total_gpa / valid_student_count, 2) if valid_student_count > 0 else 0.0
     message = f"全体の平均GPA: {avg_gpa} | 集計対象学生: {valid_student_count}名"
     
-    return {"labels": labels, "scores": scores, "message": message}
+    return {"labels": labels, "data": scores, "message": message}
 
     
     

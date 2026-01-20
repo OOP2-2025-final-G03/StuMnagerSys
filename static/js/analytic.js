@@ -92,8 +92,8 @@ document.addEventListener("DOMContentLoaded", function () {
     scales: {
       y: {
         beginAtZero: true,
-        // 全体・予測は GPA(4.0)、それ以外は 100点満点
-        max: (filter === "predict" || filter === "all" || isGpaMode(filter)) ? 4.0 : 100,
+        // 全体は学生数に応じて自動、予測は GPA(4.0)、それ以外は 100点満点
+        max: filter === "all" ? undefined : (filter === "predict" ? 4.0 : 100),
         ticks: { font: { size: 12 } }
       },
       x: {
@@ -103,7 +103,11 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   // フィルター別の設定上書き
-  if (filter === "student") {
+  if (filter === "all") {
+    chartType = "bar"; // 全体はヒストグラム
+    options.scales.y.ticks.stepSize = 1; // Y軸は1単位で表示
+    options.plugins.title.text = "全体成績分布（GPA範囲別学生数）";
+  } else if (filter === "student") {
     chartType = "doughnut";
     delete options.scales;
     // ドーナツグラフ用の凡例フォント調整
@@ -124,7 +128,12 @@ document.addEventListener("DOMContentLoaded", function () {
         {
           label: getLabelByFilter(filter),
           data: dataPoints,
-          backgroundColor: getColorsByFilter(filter, dataPoints.length),
+          backgroundColor: filter === "all" 
+            ? [
+                '#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#C9CBCF', '#4e73df'
+              ]
+            : getColorsByFilter(filter, dataPoints.length),
           borderColor: filter === "predict" ? "#4e73df" : "#ffffff",
           borderWidth: 2,
           fill: filter === "predict" ? "origin" : false, 
