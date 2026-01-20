@@ -67,6 +67,7 @@
 {% block scripts %}
 <script>
     window.chartData = {{ data|tojson }};
+    window.chartFilter = '{{ req_filter }}';
     window.userRole = '{{ user_role }}';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

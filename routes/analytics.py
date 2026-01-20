@@ -26,16 +26,66 @@ def _get_chart_all() -> dict:
     
     Returns:
         dict: {
-            0~0.5
-            0.5~1
-            ...
-            3.5~4.0
-            以上各GPA範囲の人数の分布
+            labels: GPA範囲のラベルリスト,
+            data: 各GPA範囲の学生数,
+            message: 分析メッセージ
         }。
     """
-    return {
-        
+
+    # 全学生を取得
+    students = Student.select()
+    if not students:
+        return {"labels": [], "data": [], "message": "学生データがありません。"}
+    
+    # GPA範囲ごとの学生数を集計
+    gpa_buckets = {
+        "0.0~0.5": 0,
+        "0.5~1.0": 0,
+        "1.0~1.5": 0,
+        "1.5~2.0": 0,
+        "2.0~2.5": 0,
+        "2.5~3.0": 0,
+        "3.0~3.5": 0,
+        "3.5~4.0": 0
     }
+    
+    total_gpa = 0.0
+    valid_student_count = 0
+    
+    # 各学生のGPAを計算して範囲に振り分け
+    for student in students:
+        gpa = calculate_gpa(student.student_id.user_id)
+        if gpa > 0:
+            total_gpa += gpa
+            valid_student_count += 1
+            
+            # GPA範囲の決定
+            if gpa < 0.5:
+                gpa_buckets["0.0~0.5"] += 1
+            elif gpa < 1.0:
+                gpa_buckets["0.5~1.0"] += 1
+            elif gpa < 1.5:
+                gpa_buckets["1.0~1.5"] += 1
+            elif gpa < 2.0:
+                gpa_buckets["1.5~2.0"] += 1
+            elif gpa < 2.5:
+                gpa_buckets["2.0~2.5"] += 1
+            elif gpa < 3.0:
+                gpa_buckets["2.5~3.0"] += 1
+            elif gpa < 3.5:
+                gpa_buckets["3.0~3.5"] += 1
+            else:
+                gpa_buckets["3.5~4.0"] += 1
+    
+    labels = list(gpa_buckets.keys())
+    scores = list(gpa_buckets.values())
+    
+    # 平均GPA
+    avg_gpa = round(total_gpa / valid_student_count, 2) if valid_student_count > 0 else 0.0
+    message = f"全体の平均GPA: {avg_gpa} | 集計対象学生: {valid_student_count}名"
+    
+    return {"labels": labels, "data": scores, "message": message}
+
     
     
 def _get_chart_by_student() -> dict:
