@@ -87,10 +87,6 @@ def parse_args():
 
     return parser.parse_args()
 
-@app.route('/analysis')
-def analysis_root():
-    return redirect(url_for('analysis.analysis_list'))
-
 
 if __name__ == '__main__':
     # データベースの初期化

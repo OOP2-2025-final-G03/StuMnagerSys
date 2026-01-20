@@ -16,10 +16,12 @@
 {% block page_title %}成績管理{% endblock %}
 
 {% block main_content %}
+    {# --- 変数の定義 --- #}
     {% set is_student_view = is_student_view if is_student_view is defined else (current_user.is_authenticated and current_user.role == 'student') %}
     {% set current_filter = request.args.get('filter', 'all') %}
     {% set current_student_number = request.args.get('student_number', '') %}
     {% set current_subject = request.args.get('subject', '') %}
+    {# viewパラメータでリスト表示かやる気入力かを切り替え #}
     {% set current_view = request.args.get('view', 'list') %}
     {% set mv = motivation_value if motivation_value is defined and motivation_value is not none else 50 %}
 
@@ -30,6 +32,7 @@
             <p>成績を管理します。</p>
         </div>
 
+        {# --- フィルタータブ（grade_list_1.htmlのロジックを採用） --- #}
         <div class="filter-tabs">
             {% if is_student_view %}
                 <a href="{{ url_for('grade.grade_list', filter='all', subject=current_subject, view='list') }}"
@@ -55,8 +58,8 @@
             {% endif %}
         </div>
 
+        {# --- メインコンテンツ分岐 --- #}
         {% if is_student_view and current_view == 'motivation' %}
-            <!-- 今後の頑張り（生徒のみ） -->
             <div style="margin-top: 16px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px;">
                 <h3 style="margin: 0 0 8px 0;">今後の学習のやる気</h3>
                 <p style="margin: 0 0 14px 0; color: #64748b;">
@@ -122,7 +125,6 @@
             </script>
 
         {% else %}
-            <!-- 一覧（通常表示） -->
             <div class="list-actions">
                 <div class="search-box" style="max-width: none;">
                     <form method="GET" action="{{ url_for('grade.grade_list') }}" style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -141,6 +143,8 @@
                                style="flex:1; min-width: 220px;">
 
                         <input type="hidden" name="filter" value="{{ current_filter }}">
+                        {# viewは検索時にlistに戻る、または維持する #}
+                        <input type="hidden" name="view" value="list">
 
                         <button type="submit" class="btn-add">
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -152,30 +156,29 @@
                     </form>
                 </div>
 
-        <div class="table-responsive" id="scroll-container">
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        {% if not is_student_view %}
-                            <th width="140">学籍番号</th>
-                            <th width="160">氏名</th>
-                        {% endif %}
-                        <th>科目（科目ID）</th>
-                        <th width="80">単位</th>
-                        <th width="110">評価（0〜4）</th>
-                        <th width="110">評点</th>
-                        <th>状態</th>
-                        {% if not is_student_view %}
-                            <th width="160">操作</th>
-                        {% endif %}
-                    </tr>
-                </thead>
+                {% if not is_student_view %}
+                    <a href="{{ url_for('grade.create') }}" class="btn-add">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                        新規登録
+                    </a>
+                {% endif %}
+            </div>
 
-                <tbody id="grade-table-body">
-                    {% set grade_items = items if items is defined else grades %}
-                    {% if grade_items and grade_items|length > 0 %}
-                        {% include 'grades/grade_rows.html' %}
-                    {% else %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div>
+                        {% for category, message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="table-responsive" id="scroll-container">
+                <table class="styled-table">
+                    <thead>
                         <tr>
                             {% if not is_student_view %}
                                 <th width="140">学籍番号</th>
@@ -184,16 +187,18 @@
                             <th>科目（科目ID）</th>
                             <th width="80">単位</th>
                             <th width="110">評価（0〜4）</th>
-                            <th>ステータス</th>
+                            <th width="110">評点</th>
+                            <th>状態</th>
                             {% if not is_student_view %}
                                 <th width="160">操作</th>
                             {% endif %}
                         </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody id="grade-table-body">
                         {% set grade_items = items if items is defined else grades %}
                         {% if grade_items and grade_items|length > 0 %}
+                            {# インラインでループ展開（エラー防止のためincludeを使わない） #}
                             {% for g in grade_items %}
                             <tr>
                                 {% if not is_student_view %}
@@ -212,6 +217,7 @@
 
                                 <td>{{ g.unit }}</td>
                                 <td>{{ score_to_rank(g.score) }}</td>
+                                <td>{{ g.score }}</td>
 
                                 <td>
                                     {% set is_pass = (g.score >= 60) %}
@@ -250,7 +256,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="{{ 4 if is_student_view else 7 }}" style="text-align: center; padding: 40px; color: #94a3b8;">
+                                <td colspan="{{ 4 if is_student_view else 8 }}" style="text-align: center; padding: 40px; color: #94a3b8;">
                                     データが見つかりませんでした。
                                 </td>
                             </tr>
@@ -277,36 +283,39 @@ const studentNumber = "{{ request.args.get('student_number', '') }}";
 const container = document.getElementById('scroll-container');
 const tbody = document.getElementById('grade-table-body');
 
-container.addEventListener('scroll', async () => {
-    if (!hasMore || loading) return;
+// コンテナが存在する場合のみスクロール監視を行う
+if (container && tbody) {
+    container.addEventListener('scroll', async () => {
+        if (!hasMore || loading) return;
 
-    // 下部までスクロールしたか
-    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
-        loading = true;
+        // 下部までスクロールしたか
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+            loading = true;
 
-        const params = new URLSearchParams({
-            filter: filter,
-            subject: subject,
-            student_number: studentNumber,
-            offset: offset
-        });
+            const params = new URLSearchParams({
+                filter: filter,
+                subject: subject,
+                student_number: studentNumber,
+                offset: offset
+            });
 
-        const res = await fetch(
-            `{{ url_for('grade.grade_list') }}?${params.toString()}`,
-            { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
-        );
+            const res = await fetch(
+                `{{ url_for('grade.grade_list') }}?${params.toString()}`,
+                { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+            );
 
-        const html = await res.text();
+            const html = await res.text();
 
-        if (!html.trim()) {
-            hasMore = false;
-            return;
+            if (!html.trim()) {
+                hasMore = false;
+                return;
+            }
+
+            tbody.insertAdjacentHTML('beforeend', html);
+            offset += 50;
+            loading = false;
         }
-
-        tbody.insertAdjacentHTML('beforeend', html);
-        offset += 50;
-        loading = false;
-    }
-});
+    });
+}
 </script>
 {% endblock %}

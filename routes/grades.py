@@ -112,12 +112,11 @@ def grade_list():
     )
 
 
-@grade_bp.route('/<role_type>/motivation', methods=['GET', 'POST'])
+@grade_bp.route('/motivation', methods=['GET', 'POST'])
+@role_required('student')
 @login_required
-def motivation(role_type):
+def motivation():
     # 生徒のみ利用可
-    if current_user.role != 'student' or role_type != 'student':
-        abort(403)
 
     user = User.get_by_id(current_user.get_id())
 
