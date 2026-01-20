@@ -1,6 +1,5 @@
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, request, render_template
 from flask_login import login_required, current_user
-from collections import defaultdict
 from peewee import OperationalError, fn
 
 from models import Grade, Subject, Student

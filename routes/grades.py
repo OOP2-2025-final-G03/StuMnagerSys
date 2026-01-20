@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from peewee import DoesNotExist, OperationalError
 from flask_login import login_required, current_user
 from peewee import DoesNotExist

@@ -3,7 +3,6 @@ from flask_login import login_required, current_user
 
 from models import Subject, Enrollment, Student
 from utils import role_required
-from datetime import datetime
 
 subject_bp = Blueprint('subject', __name__, url_prefix='/subject')
 
