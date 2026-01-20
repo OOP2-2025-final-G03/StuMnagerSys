@@ -82,8 +82,13 @@
 
 .chart-container {
     position: relative;
-    min-height: 350px; 
+    flex: 1;
+    min-width: 0;
     
+    width: 100%;
+    display: block;
+    overflow: hidden;
+
     /* ローディングアニメーション */
     background: linear-gradient(
         90deg, 
@@ -100,9 +105,21 @@
 }
 
 canvas {
-    width: 100% !important;
+    position: absolute !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    
+    width: 80% !important;
     height: 100% !important;
     display: block;
+
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    
 }
 
 .insight-message {
@@ -111,6 +128,9 @@ canvas {
     border-radius: 16px;
     border-left: 4px solid var(--text-main);
     transition: transform 0.2s var(--anim-curve);
+
+    width: 100%;
+    box-sizing: border-box;
     
     /* メッセージを垂直方向中央に配置 */
     display: flex;

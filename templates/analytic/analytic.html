@@ -1,45 +1,10 @@
-{% extends active_template %} {% block extra_css %}
+{% extends active_template %} 
+{% block extra_css %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/analytic.css') }}"
 />
-{% endblock %} {% block page_title %}成績分析{% endblock %} {% block
-main_content %}
-<div class="analytic-card">
-  <div class="filter-tabs">
-    {% if user_role != 'student' %}
-    <a
-      href="{{ url_for('analytic.analytic', filter='all') }}"
-      class="filter-tab {{ 'active' if req_filter == 'all' else '' }}"
-      >全体</a
-    >
-    <a
-      href="{{ url_for('analytic.analytic', filter='student') }}"
-      class="filter-tab {{ 'active' if req_filter == 'student' else '' }}"
-      >学生別</a
-    >
-    <a
-      href="{{ url_for('analytic.analytic', filter='subject') }}"
-      class="filter-tab {{ 'active' if req_filter == 'subject' else '' }}"
-      >科目別</a
-    >
-    {% else %}
-    <a
-      href="{{ url_for('analytic.analytic', filter='student') }}"
-      class="filter-tab {{ 'active' if req_filter == 'student' else '' }}"
-      >私の成績</a
-    >
-    <a
-      href="{{ url_for('analytic.analytic', filter='predict') }}"
-      class="filter-tab {{ 'active' if req_filter == 'predict' else '' }}"
-      >成績予測</a
-    >
-    {% endif %}
-  </div>
-
-  <div class="chart-container">
-    <canvas id="chart"></canvas>
-  </div>
+{% endblock %}
 
 {% block page_title %}成績分析{% endblock %}
 
@@ -85,11 +50,11 @@ main_content %}
         {% endif %}
 
 
-        <div style="display: flex; align-items: flex-start; gap: 2em;">
-            <div class="chart-container" style="flex: 0 0 auto; width: 350px;">
-                <canvas id="chart" width="350" height="350" style="display:block;"></canvas>
+        <div style="display: flex; flex-direction: column; gap: 1em; flex: 1; min-height: 0; overflow: hidden;">
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
             </div>
-            <div class="insight-message" style="flex: 1; min-width: 200px;">
+            <div class="insight-message">
                 <p id="insight-message">
                     {{ analysis_message | default('上部のタブを切り替えて、詳細な分析データを確認してください。') }}
                 </p>
@@ -102,6 +67,7 @@ main_content %}
 {% block scripts %}
 <script>
     window.chartData = {{ data|tojson }};
+    window.userRole = '{{ user_role }}';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/analytic.js') }}"></script>
