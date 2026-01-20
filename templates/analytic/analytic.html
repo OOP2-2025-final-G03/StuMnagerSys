@@ -1,7 +1,9 @@
-{% extends active_template %}
-
+{% extends active_template %} 
 {% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/analytic.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/analytic.css') }}"
+/>
 {% endblock %}
 
 {% block page_title %}成績分析{% endblock %}
@@ -48,11 +50,11 @@
         {% endif %}
 
 
-        <div style="display: flex; align-items: flex-start; gap: 2em;">
-            <div class="chart-container" style="flex: 0 0 auto; width: 350px;">
-                <canvas id="chart" width="350" height="350" style="display:block;"></canvas>
+        <div style="display: flex; flex-direction: column; gap: 1em; flex: 1; min-height: 0; overflow: hidden;">
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
             </div>
-            <div class="insight-message" style="flex: 1; min-width: 200px;">
+            <div class="insight-message">
                 <p id="insight-message">
                     {{ analysis_message | default('上部のタブを切り替えて、詳細な分析データを確認してください。') }}
                 </p>
@@ -66,6 +68,7 @@
 <script>
     window.chartData = {{ data|tojson }};
     window.chartFilter = '{{ req_filter }}';
+    window.userRole = '{{ user_role }}';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/analytic.js') }}"></script>
