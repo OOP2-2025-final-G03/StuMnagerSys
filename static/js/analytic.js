@@ -179,6 +179,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if (chartData.message) {
       messageElement.innerText = chartData.message;
     }
+    else if (filter === 'student' && dataPoints.length > 0) {
+      // 得意・苦手を自動計算
+      const maxIdx = dataPoints.indexOf(Math.max(...dataPoints));
+      const minIdx = dataPoints.indexOf(Math.min(...dataPoints));
+      const best = labels[maxIdx];
+      const worst = labels[minIdx];
+      messageElement.innerText = `${chartStudentName}は${best}が得意(${dataPoints[maxIdx]}点)、${worst}が苦手な傾向にあります(${dataPoints[minIdx]}点)。`;
+    }
   }
 });
 
