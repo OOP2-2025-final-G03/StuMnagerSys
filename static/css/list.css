@@ -3,7 +3,11 @@
     background: var(--card-bg); /* カード背景色をテーマ変数に */
     border-radius: 12px;
     box-shadow: var(--shadow-sm); 
-    height: auto;
+
+    display: flex;
+    flex-direction: column;
+    
+    height: 85%;
     padding: 24px;
     margin-top: 24px;
     transition: background-color var(--anim-medium), box-shadow var(--anim-medium);
@@ -370,6 +374,10 @@
 }
 
 #scroll-container {
-    max-height: 500px;
+    flex: 1 1 auto;
+    min-height: 0; 
     overflow-y: auto;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-placeholder) transparent;
 }
