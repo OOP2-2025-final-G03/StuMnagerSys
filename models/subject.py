@@ -1,4 +1,4 @@
-from peewee import Model, AutoField, CharField, IntegerField, SqliteDatabase
+from peewee import Model, AutoField, CharField, IntegerField
 from utils import db
 
 class Subject(Model):

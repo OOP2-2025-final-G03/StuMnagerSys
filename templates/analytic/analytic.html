@@ -1,0 +1,75 @@
+{% extends active_template %} 
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/analytic.css') }}"
+/>
+{% endblock %}
+
+{% block page_title %}成績分析{% endblock %}
+
+{% block main_content %}
+    <div class="analytic-card">
+        
+
+          <div class="filter-tabs">
+                {% if user_role != 'student' %}
+                     <a href="{{ url_for('analytic.analytic', filter='all') }}" 
+                         class="filter-tab {{ 'active' if req_filter == 'all' else '' }}">
+                         全体
+                     </a>
+                     <a href="{{ url_for('analytic.analytic', filter='student') }}" 
+                         class="filter-tab {{ 'active' if req_filter == 'student' else '' }}">
+                         学生別
+                     </a>
+                     <a href="{{ url_for('analytic.analytic', filter='subject') }}" 
+                         class="filter-tab {{ 'active' if req_filter == 'subject' else '' }}">
+                         科目別
+                     </a>
+                {% else %}
+                     <a href="{{ url_for('analytic.analytic', filter='student') }}" 
+                         class="filter-tab {{ 'active' if req_filter == 'student' else '' }}">
+                         私の成績
+                     </a>
+                     <a href="{{ url_for('analytic.analytic', filter='predict') }}" 
+                         class="filter-tab {{ 'active' if req_filter == 'predict' else '' }}">
+                         成績予測
+                     </a>
+                {% endif %}
+          </div>
+        {% if req_filter == 'student' and students|length > 0 and user_role != 'student' %}
+        <form id="student-select-form" style="margin: 1em 0;">
+             <label for="student-select">学生を選択：</label>
+             <select id="student-select" name="student_id">
+                 <option value="">-- 学生を選択 --</option>
+                 {% for stu in students %}
+                     <option value="{{ stu.student_id }}" {% if stu.student_id == selected_student_id %}selected{% endif %}>{{ stu.name }} ({{ stu.student_id }})</option>
+                 {% endfor %}
+             </select>
+        </form>
+        {% endif %}
+
+
+        <div style="display: flex; flex-direction: column; gap: 1em; flex: 1; min-height: 0; overflow: hidden;">
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+            <div class="insight-message">
+                <p id="insight-message">
+                    {{ analysis_message | default('上部のタブを切り替えて、詳細な分析データを確認してください。') }}
+                </p>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.chartData = {{ data|tojson }};
+    window.chartFilter = '{{ req_filter }}';
+    window.userRole = '{{ user_role }}';
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/analytic.js') }}"></script>
+{% endblock %}

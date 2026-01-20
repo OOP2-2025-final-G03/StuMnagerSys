@@ -1,65 +1,26 @@
-from functools import wraps
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, g, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from peewee import DoesNotExist, OperationalError
 from flask_login import login_required, current_user
+from peewee import DoesNotExist
 
-from utils import Config
+from utils import role_required
 from models import Grade, Subject, Student, User, Enrollment, Motivation
 
 grade_bp = Blueprint('grade', __name__, url_prefix='/grade')
 
+# -----------------------------
+# 成績一覧（/grade/list）
+# -----------------------------
 
-@grade_bp.url_value_preprocessor
-def capture_role_type(endpoint, values):
-    if not values:
-        return
-    role_type = values.get('role_type')
-    if role_type is None:
-        return
-    if role_type not in Config.ROLE_TITLES:
-        abort(404)
-    g.role_type = role_type
-
-
-@grade_bp.url_defaults
-def add_role_type(endpoint, values):
-    if not endpoint.startswith('grade.'):
-        return
-    if 'role_type' in values:
-        return
-    role = getattr(g, 'role_type', None)
-    if role is None:
-        role = (request.view_args or {}).get('role_type')
-    if role is not None:
-        values['role_type'] = role
-
-
-def require_roles(*allowed_roles):
-    def deco(view_func):
-        @wraps(view_func)
-        def wrapper(*args, **kwargs):
-            if not current_user.is_authenticated:
-                abort(403)
-            if current_user.role not in allowed_roles:
-                abort(403)
-            return view_func(*args, **kwargs)
-        return wrapper
-    return deco
-
-
-_EDIT_ROLES = [r for r in ('admin', 'teacher') if r in Config.ROLE_TITLES]
-if not _EDIT_ROLES:
-    _EDIT_ROLES = list(Config.ROLE_TITLES.keys())
-
-
-@grade_bp.route('/<role_type>/list')
+@grade_bp.route('/list')
 @login_required
-def grade_list(role_type):
-    # admin 以外は URLのrole_type と自分のroleを一致させる
-    if current_user.role != 'admin' and current_user.role != role_type:
-        abort(403)
+def grade_list():
+    """
+    - student: 自分の成績だけ表示（student_number の検索は無視）
+    - teacher/admin: 学籍番号・科目で検索できる
+    """
 
     is_student_view = (current_user.role == 'student')
     current_filter = request.args.get('filter', 'all')
@@ -92,7 +53,16 @@ def grade_list(role_type):
         query = query.where(Grade.score < 60)
 
     query = query.order_by(Grade.student_id.asc(), Grade.subject_id.asc())
-    grade_items = list(query)
+    
+    # --- ページネーション処理 ---
+    offset = int(request.args.get('offset', 0))
+    limit = 50
+
+    # SQLレベルで取得制限
+    grade_items = list(query.offset(offset).limit(limit))
+    
+    # 次のページがあるか簡易判定（取得数がlimitと同じならまだあるかも）
+    has_more = len(grade_items) >= limit
 
     subject_map = {s.id: s.name for s in Subject.select(Subject.id, Subject.name)}
 
@@ -106,6 +76,16 @@ def grade_list(role_type):
                 .where(User.user_id.in_(student_ids))
             )
             student_name_map = {st.student_id.user_id: st.name for st in rows}
+            
+    # AJAXリクエスト
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'grades/grade_rows.html',
+            items=grade_items,
+            subject_map=subject_map,
+            student_name_map=student_name_map,
+            is_student_view=is_student_view
+        )
 
     # 生徒の「今後の頑張り」初期値
     motivation_value = None
@@ -124,7 +104,6 @@ def grade_list(role_type):
         'grades/grade_list.html',
         title='成績一覧',
         items=grade_items,
-        active_template=f'dashboard/{role_type}.html',
         active_page='grades',
         subject_map=subject_map,
         student_name_map=student_name_map,
@@ -173,13 +152,15 @@ def motivation(role_type):
     return jsonify({"ok": True, "value": int(value)})
 
 
-@grade_bp.route('/<role_type>/enrolled_subjects/<student_number>')
-@login_required
-@require_roles(*_EDIT_ROLES)
-def enrolled_subjects(role_type, student_number):
-    if current_user.role != 'admin' and current_user.role != role_type:
-        abort(403)
+# -----------------------------
+# ★履修科目取得（AJAX用）
+#   /grade/enrolled_subjects/<student_number>
+# -----------------------------
 
+@grade_bp.route('/enrolled_subjects/<student_number>')
+@role_required('admin', 'teacher')
+@login_required
+def enrolled_subjects(student_number):
     rows = (
         Enrollment.select(Enrollment, Subject)
         .join(Subject)
@@ -191,10 +172,15 @@ def enrolled_subjects(role_type, student_number):
     return jsonify(data)
 
 
-@grade_bp.route('/<role_type>/create', methods=['GET', 'POST'])
+# -----------------------------
+# 成績作成（/grade/create）
+# -----------------------------
+
+@grade_bp.route('/create', methods=['GET', 'POST'])
+@role_required('admin', 'teacher')
 @login_required
-@require_roles(*_EDIT_ROLES)
-def create(role_type):
+def create():
+    # 生徒一覧（Student + User）
     student_rows = (
         Student.select(Student, User)
         .join(User)
@@ -213,30 +199,50 @@ def create(role_type):
 
         if not student_number:
             flash('学籍番号を選択してください。', 'error')
-            return render_template('grades/grade_form.html', title='成績登録', mode='create',
-                                   active_template='content_base.html', role=role_type, role_type=role_type,
-                                   students=students, subjects=subjects)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_page='grades',
+                students=students,
+                subjects=subjects,
+            )
 
         if not subject_id_raw.isdigit():
             flash('科目を選択してください。', 'error')
-            return render_template('grades/grade_form.html', title='成績登録', mode='create',
-                                   active_template='content_base.html', role=role_type, role_type=role_type,
-                                   students=students, subjects=subjects)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_page='grades',
+                students=students,
+                subjects=subjects,
+            )
 
         if not score_raw.isdigit():
             flash('点数は数字で入力してください。', 'error')
-            return render_template('grades/grade_form.html', title='成績登録', mode='create',
-                                   active_template='content_base.html', role=role_type, role_type=role_type,
-                                   students=students, subjects=subjects)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_page='grades',
+                students=students,
+                subjects=subjects,
+            )
 
         subject_id = int(subject_id_raw)
         score = int(score_raw)
 
         if not (0 <= score <= 100):
             flash('点数は0〜100で入力してください。', 'error')
-            return render_template('grades/grade_form.html', title='成績登録', mode='create',
-                                   active_template='content_base.html', role=role_type, role_type=role_type,
-                                   students=students, subjects=subjects)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_page='grades',
+                students=students,
+                subjects=subjects,
+            )
 
         # 履修チェック
         is_enrolled = Enrollment.select().where(
@@ -245,42 +251,74 @@ def create(role_type):
         ).exists()
         if not is_enrolled:
             flash('この学生は選択した科目を履修していません。', 'error')
-            return render_template('grades/grade_form.html', title='成績登録', mode='create',
-                                   active_template='content_base.html', role=role_type, role_type=role_type,
-                                   students=students, subjects=subjects)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_page='grades',
+                students=students,
+                subjects=subjects,
+            )
 
         # 単位は科目マスタから確定
         try:
             sub = Subject.get_by_id(subject_id)
         except DoesNotExist:
             flash('選択した科目が存在しません。', 'error')
-            return render_template('grades/grade_form.html', title='成績登録', mode='create',
-                                   active_template='content_base.html', role=role_type, role_type=role_type,
-                                   students=students, subjects=subjects)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績登録',
+                mode='create',
+                active_page='grades',
+                students=students,
+                subjects=subjects,
+            )
 
         unit = int(sub.credits)
 
-        exists = Grade.select().where(
+        grade = Grade.select().where(
             (Grade.student_id == student_number) &
             (Grade.subject_id == subject_id)
-        ).exists()
-        if exists:
-            flash('同じ学籍番号・科目IDの成績が既に存在します。編集してください。', 'error')
+        ).first()
+
+        if grade:
+            # アップデート
+            grade.unit = unit
+            grade.score = score
+            grade.save()
+
+            flash('既存の成績を更新しました。', 'success')
+            return redirect(url_for('grade.grade_list'))
+        else:
+            # 新規作成
+            Grade.create(
+                student_id=student_number,
+                subject_id=subject_id,
+                unit=unit,
+                score=score
+            )
+            flash('成績を登録しました。', 'success')
+
             return redirect(url_for('grade.grade_list'))
 
-        Grade.create(student_id=student_number, subject_id=subject_id, unit=unit, score=score)
-        flash('成績を登録しました。', 'success')
-        return redirect(url_for('grade.grade_list'))
+    return render_template(
+        'grades/grade_form.html',
+        title='成績登録',
+        mode='create',
+        active_page='grades',
+        students=students,
+        subjects=subjects,
+    )
 
-    return render_template('grades/grade_form.html', title='成績登録', mode='create',
-                           active_template='content_base.html', role=role_type, role_type=role_type,
-                           students=students, subjects=subjects)
 
+# -----------------------------
+# 成績編集（/grade/edit/...）
+# -----------------------------
 
-@grade_bp.route('/<role_type>/edit/<student_number>/<int:subject_id>', methods=['GET', 'POST'])
+@grade_bp.route('/edit/<student_number>/<int:subject_id>', methods=['GET', 'POST'])
+@role_required('admin', 'teacher')
 @login_required
-@require_roles(*_EDIT_ROLES)
-def edit(role_type, student_number, subject_id):
+def edit(student_number, subject_id):
     try:
         grade = Grade.get((Grade.student_id == student_number) & (Grade.subject_id == subject_id))
     except DoesNotExist:
@@ -293,24 +331,36 @@ def edit(role_type, student_number, subject_id):
 
         if not (unit_raw.isdigit() and score_raw.isdigit()):
             flash('単位 / 点数 は数字で入力してください。', 'error')
-            return render_template('grades/grade_form.html', title='成績編集', mode='edit',
-                                   grade=grade, active_template='content_base.html',
-                                   role=role_type, role_type=role_type)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績編集',
+                mode='edit',
+                grade=grade,
+                active_page='grades',
+            )
 
         unit = int(unit_raw)
         score = int(score_raw)
 
         if unit < 0:
             flash('単位は0以上で入力してください。', 'error')
-            return render_template('grades/grade_form.html', title='成績編集', mode='edit',
-                                   grade=grade, active_template='content_base.html',
-                                   role=role_type, role_type=role_type)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績編集',
+                mode='edit',
+                grade=grade,
+                active_page='grades',
+            )
 
         if not (0 <= score <= 100):
             flash('点数は0〜100で入力してください。', 'error')
-            return render_template('grades/grade_form.html', title='成績編集', mode='edit',
-                                   grade=grade, active_template='content_base.html',
-                                   role=role_type, role_type=role_type)
+            return render_template(
+                'grades/grade_form.html',
+                title='成績編集',
+                mode='edit',
+                grade=grade,
+                active_page='grades',
+            )
 
         grade.unit = unit
         grade.score = score
@@ -319,15 +369,23 @@ def edit(role_type, student_number, subject_id):
         flash('成績を更新しました。', 'success')
         return redirect(url_for('grade.grade_list'))
 
-    return render_template('grades/grade_form.html', title='成績編集', mode='edit',
-                           grade=grade, active_template='content_base.html',
-                           role=role_type, role_type=role_type)
+    return render_template(
+        'grades/grade_form.html',
+        title='成績編集',
+        mode='edit',
+        grade=grade,
+        active_page='grades',
+    )
 
 
-@grade_bp.route('/<role_type>/delete/<student_number>/<int:subject_id>')
+# -----------------------------
+# 成績削除（/grade/delete/...）
+# -----------------------------
+
+@grade_bp.route('/delete/<student_number>/<int:subject_id>')
+@role_required('admin', 'teacher')
 @login_required
-@require_roles(*_EDIT_ROLES)
-def delete(role_type, student_number, subject_id):
+def delete(student_number, subject_id):
     try:
         grade = Grade.get((Grade.student_id == student_number) & (Grade.subject_id == subject_id))
         grade.delete_instance()

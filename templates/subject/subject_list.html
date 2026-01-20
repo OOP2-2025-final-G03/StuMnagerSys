@@ -1,148 +1,43 @@
-{% extends active_template %} {% block extra_css %}
+{% extends active_template %}
+{% block extra_css %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/list.css') }}"
 />
 
 <style>
-  /* --- ご提示のスタイルを完全に維持 --- */
-  .category {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-  .category-required {
-    background-color: rgba(249, 115, 22, 0.1);
-    color: #c2410c;
-  }
-  [data-theme="dark"] .category-required {
-    color: #fb923c;
-  }
-  .category-elective {
-    background-color: rgba(14, 165, 233, 0.1);
-    color: #0284c7;
-  }
-  [data-theme="dark"] .category-elective {
-    color: #38bdf8;
-  }
-  .credit-num {
-    font-weight: 600;
-    color: var(--text-main);
-  }
-
-  /* --- 修正後 --- */
-  .list-card {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-  /* もし画面全体が動かない場合はこちらも確認 */
-  .list-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .search-box {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    min-width: 0;
-  }
-  .search-box input {
-    height: 36px;
-    padding: 0 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background-color: var(--input-bg);
-    color: var(--text-main);
-    flex: 1;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .btn-search {
-    flex-shrink: 1;
-    white-space: normal;
-    padding: 0 10px;
-    appearance: none;
-    cursor: pointer;
-    height: 36px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #ffffff;
-    background-color: var(--primary-color);
-    border-radius: 8px;
-    border: none;
-  }
-  .btn-add {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: auto;
-    min-height: 36px;
-    padding: 8px 16px;
-    background-color: var(--primary-color);
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    white-space: normal;
-    text-align: center;
-    line-height: 1.2;
-    flex-shrink: 1;
-    max-width: 100%;
-    box-sizing: border-box;
-    transition: all var(--anim-fast);
-  }
-
   /* 履修管理ボタン用スタイル追加 */
-  .btn-manage {
-    background-color: #6366f1;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-    margin-bottom: 4px;
+  .manage-link {
+      color: #444aef;
+      background-color: transparent;
+      border: 1px solid var(--border-light); 
   }
 
-  @media (max-width: 500px) {
-    .list-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .btn-add {
-      order: -1;
-      width: 100%;
-    }
-    .search-box {
-      width: 100%;
-    }
+  .manage-link:hover {
+      color: #ffffff;
+      background-color: #2930f3;
+      border-color: #444aef;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(41, 48, 243, 0.2);
   }
-  .table-responsive {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+
 </style>
-{% endblock %} {% block page_title %}科目管理{% endblock %} {% block
-main_content %}
+{% endblock %}
+
+{% block page_title %}
+{% if user_role in ['admin', 'teacher'] %}全開講科目管理{% else %} 全科目一覧 {% endif %}
+{% endblock %} 
+
+{% block main_content %}
 <div class="list-card">
   <div class="list-header">
-    <h2>{{ title }}</h2>
-    <p>カリキュラムや担当教員、単位数を管理します。</p>
+    {% if user_role in ['admin', 'teacher'] %}
+    <h2>全開講科目管理</h2>
+    <p>開講科目の編集・削除および履修者の管理ができます。</p>
+    {% else %}
+    <h2>全科目一覧</h2>
+    <p>現在開講されている科目の一覧です。</p>
+    {% endif %}
   </div>
 
   {% set current_category = request.args.get('category', 'all') %}
@@ -168,7 +63,7 @@ main_content %}
     <form
       method="get"
       action="{{ url_for('subject.subject_list') }}"
-      class="search-box"
+      class="search-form"
     >
       <input type="hidden" name="role" value="{{ user_role }}" />
       <input
@@ -177,16 +72,16 @@ main_content %}
         placeholder="科目名・専攻で検索..."
         value="{{ request.args.get('keyword', '') }}"
       />
-      <button type="submit" class="btn-search">検索</button>
+      <button type="submit">検索</button>
     </form>
     {% if user_role in ['admin', 'teacher'] %}
-    <a href="{{ url_for('subject.create', role=role) }}" class="btn-add"
+    <a href="{{ url_for('subject.create', role=user_role) }}" class="btn-add"
       >新規科目</a
     >
     {% endif %}
   </div>
 
-  <div class="table-responsive">
+  <div class="table-responsive" id="scroll-container">
     <table class="styled-table">
       <thead>
         <tr>
@@ -197,51 +92,18 @@ main_content %}
           <th>対象学年</th>
           <th>単位数</th>
           <th>開講日時</th>
+          {% if user_role in ['admin', 'teacher'] %}
           <th>操作</th>
+          {% endif %}
         </tr>
       </thead>
-      <tbody>
-        {% if subjects|length > 0 %} {% for sub in subjects %}
-        <tr>
-          <td style="font-family: monospace">{{ sub.id }}</td>
-          <td style="font-weight: 500; color: var(--text-main)">
-            {{ sub.name }}
-          </td>
-          <td>{{ sub.department }}</td>
-          <td>
-            <span
-              class="category {{ 'category-required' if sub.category == 'required' else 'category-elective' }}"
-              >{{ '必修' if sub.category == 'required' else '選択' }}</span
-            >
-          </td>
-          <td>{{ sub.grade }} 年</td>
-          <td><span class="credit-num">{{ sub.credits }}</span> 単位</td>
-          <td>{{ sub.day }} {{ sub.period }}限</td>
-          <td>
-            <div class="action-buttons">
-              <a
-                href="{{ url_for('subject.manage', subject_id=sub.id, role=role) }}"
-                class="btn-manage"
-                >履修管理</a
-              >
-              <a
-                href="{{ url_for('subject.edit', subject_id=sub.id, role=role) }}"
-                class="action-link edit-link"
-                >編集</a
-              >
-              <a
-                href="{{ url_for('subject.delete', subject_id=sub.id, role=role) }}"
-                class="action-link delete-link"
-                onclick="return confirm('本当に削除しますか？');"
-                >削除</a
-              >
-            </div>
-          </td>
-        </tr>
-        {% endfor %} {% else %}
+      <tbody id="subject-table-body">
+        {% if subjects|length > 0 %}
+          {% include 'subject/subject_rows.html' %}
+        {% else %}
         <tr>
           <td
-            colspan="8"
+            colspan="{{ 8 if user_role in ['admin', 'teacher'] else 7 }}"
             style="text-align: center; padding: 40px; color: #94a3b8"
           >
             データが見つかりませんでした。
@@ -252,4 +114,47 @@ main_content %}
     </table>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+let offset = 50;
+let loading = false;
+let hasMore = {{ 'true' if has_more else 'false' }};
+const category = "{{ current_category }}";
+const keyword = "{{ request.args.get('keyword', '') }}";
+
+const container = document.getElementById('scroll-container');
+const tbody = document.getElementById('subject-table-body');
+
+container.addEventListener('scroll', async () => {
+    if (!hasMore || loading) return;
+
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+        loading = true;
+
+        // クエリパラメータの構築
+        const params = new URLSearchParams({
+            category: category,
+            keyword: keyword,
+            offset: offset
+        });
+
+        const res = await fetch(
+            `{{ url_for('subject.subject_list') }}?${params.toString()}`,
+            { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+        );
+
+        const html = await res.text();
+
+        if (!html.trim()) {
+            hasMore = false;
+            return;
+        }
+
+        tbody.insertAdjacentHTML('beforeend', html);
+        offset += 50;
+        loading = false;
+    }
+});
+</script>
 {% endblock %}

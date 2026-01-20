@@ -29,7 +29,8 @@
 }
 
 /* --- 科目リストのフィルタータブ --- */
-.filter-tabs {
+.filter-tabs,
+.grade-tabs {
     display: flex;
     gap: 8px;
     border-bottom: 1px solid var(--border-light); /* 分割線 */
@@ -37,7 +38,15 @@
     margin-bottom: 24px;
 }
 
-.filter-tab {
+.grade-tabs{
+    border-bottom: none;
+    padding-bottom: 6px;
+    margin-bottom: 0;
+    gap: 4px;
+}
+
+.filter-tab,
+.grade-tab {
     display: inline-flex;
     align-items: center;
     padding: 8px 16px;
@@ -50,12 +59,14 @@
     transition: all var(--anim-fast); /* アニメーションをテーマの速い速度に */
 }
 
-.filter-tab:hover {
+.filter-tab:hover,
+.grade-tab:hover {
     background-color: var(--hover-bg); /* ホバー時の背景色 */
     color: var(--text-main);
 }
 
-.filter-tab.active {
+.filter-tab.active,
+.grade-tab.active {
     background-color: var(--active-bg); /* アクティブ時の背景色 (Light:黒 / Dark:白) */
     color: var(--active-text);          /* アクティブ時の文字色 (Light:白 / Dark:黒) */
     box-shadow: var(--shadow-sm);
@@ -356,4 +367,9 @@
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
+}
+
+#scroll-container {
+    max-height: 500px;
+    overflow-y: auto;
 }

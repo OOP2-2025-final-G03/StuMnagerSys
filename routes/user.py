@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, current_app, abort, g, jsonify, flash, redirect, url_for
+from flask import Blueprint, render_template, request, current_app, abort, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-import datetime
+
 from models import Student, Teacher, User, Password
 from utils import role_required
 
@@ -15,53 +15,51 @@ def user_list():
     管理者以外のアクセスは禁止されています。
     """
     filter_role = request.args.get('role', 'all')
-    
+    # 
+    offset = int(request.args.get('offset', 0))
+    limit = 50
 
     users = []
 
-    if filter_role == "student":
-        role_title = '学生'
-        students = Student.select()
-        users = [dict(s.to_dict(), role='student') for s in students]
-    elif filter_role == "teacher" and current_user.role == 'admin':
-        role_title = '教員  '
-        teachers = Teacher.select()
-        users = [dict(t.to_dict(), role='teacher') for t in teachers]
-    else:
-        role_title = '全体'
-        students = Student.select()
-        users = [dict(s.to_dict(), role='student') for s in students]
-        if current_user.role == 'admin':
-            teachers = Teacher.select()
-            users += [dict(t.to_dict(), role='teacher') for t in teachers]
+    # 学生
+    if filter_role in ('student', 'all'):
+        students = (
+            Student
+            .select()
+            .offset(offset)
+            .limit(limit)
+        )
+        users += [dict(s.to_dict(), role='student') for s in students]
 
-    
+    # 教員
+    if filter_role in ('teacher', 'all') and current_user.role == 'admin':
+        teachers = (
+            Teacher
+            .select()
+            .offset(offset)
+            .limit(limit)
+        )
+        users += [dict(t.to_dict(), role='teacher') for t in teachers]
+
+    # まだユーザーが残っているかどうか
+    has_more = len(users) >= limit
+
+    # リストだけ返す
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'user/user_rows.html',
+            users=users,
+            current_role=filter_role
+        )
 
     return render_template(
         "user/user_list.html",
-        active_template='dashboard/admin.html',
-        role='admin', 
         active_page='users',
-        user_role_name=current_app.config['ROLE_TITLES']['admin'],
-        title=role_title,
+        title=filter_role,
         users=users,
-        current_date=datetime.datetime.now().strftime('%Y年%m月%d日')
+        current_role=filter_role,
+        has_more=has_more
     )
-
-    """
-    ユーザー一覧を取得するAPIエンドポイント。
-    学生は自分自身の情報のみ取得可能。
-    教師・スーパーユーザーは全ユーザー情報を取得可能。
-    current_user = g.current_user
-
-    if current_user.is_student():
-        users = [current_user]
-    else:
-        users = User.select()
-
-    return jsonify([u.to_dict() for u in users])
-    """
-    
 
 @users_bp.route('/search')
 @login_required
@@ -114,22 +112,17 @@ def user_search():
 
     return render_template(
         "user/user_list.html",
-        active_template='dashboard/admin.html',
         active_page='users',
         title='検索結果',
         users=users,
-        current_date=datetime.datetime.now().strftime('%Y年%m月%d日')
     )
 
-
-
-
-# =====================
-# ユーザー詳細
-# =====================
 @users_bp.route('/detail', methods=['GET'])
 @login_required
 def user_detail():
+    """
+    ユーザー詳細
+    """
     user_id = request.args.get('user_id')
     user = User.get_or_none(User.user_id == user_id)
     if not user:
@@ -156,15 +149,13 @@ def user_detail():
 
     return jsonify(user_data)
 
-
-
-# =====================
-# ユーザー作成
-# =====================
 @users_bp.route('/create', methods=['POST'])
 @role_required('admin')
 @login_required
 def create_user():
+    """
+    ユーザー作成
+    """
     data = request.json
     user_id=data.get('user_id')
     name=data.get('name')
@@ -173,9 +164,8 @@ def create_user():
     department=data.get('department')
     gender=data.get('gender')
     password_raw=data.get('password')
-    
-    if role not in ["student", "teacher"]:
-        return jsonify({'error': 'Invalid role'}), 400
+    grade=data.get('grade')
+
     try:
         # ユーザーを作成
         User.create(
@@ -190,7 +180,8 @@ def create_user():
                 name=name,
                 birth_date=birth_date,
                 department=department,
-                gender=gender
+                gender=gender,
+                grade=grade
             )
         elif role == "teacher":
             Teacher.create(
@@ -212,33 +203,13 @@ def create_user():
         # ユーザー作成中にエラーが発生した場合
         return jsonify({'error': str(e)}), 500
 
-# =====================
-# ユーザー更新
-# =====================
-@users_bp.route('/update', methods=['POST'])
-@role_required('admin')
-@login_required
-def update_user():
-    data = request.json
-
-    user = User.get_or_none(User.user_id == data['user_id'])
-    if not user:
-        abort(404)
-
-    user.name = data.get('name', user.name)
-    user.role = data.get('role', user.role)
-    user.department = data.get('department', user.department)
-    user.save()
-
-    return jsonify({'message': 'ユーザーが更新されました'})
-
-# =====================
-# ユーザー削除
-# =====================
 @users_bp.route('/delete/<string:user_id>', methods=['POST'])
 @role_required('admin')
 @login_required
 def delete_user(user_id):
+    """
+    ユーザー削除
+    """
     user = User.get_or_none(User.user_id == user_id)
     if not user:
         return jsonify({'error': 'ユーザーが見つかりません'}), 404
@@ -250,29 +221,25 @@ def delete_user(user_id):
     
     return redirect(url_for('user.user_list'))
 
-# =====================
-# ユーザー新規作成フォーム表示
-# =====================
 @users_bp.route('/new', methods=['GET'])
 @role_required('admin')
 @login_required
-def new_user_form():    
+def new_user_form():
+    """
+    ユーザー新規作成フォーム表示
+    """
     return render_template("user/user_form.html",
-                           active_template='dashboard/admin.html',
                            user=None,
-                           role='admin', 
                            active_page='users',
-                           user_role_name=current_app.config['ROLE_TITLES']['admin'],
-                           title='ユーザー新規登録',
-                           current_date=datetime.datetime.now().strftime('%Y年%m月%d日')) 
+                           title='ユーザー新規登録',) 
 
-# =====================
-#  ユーザー編集フォーム表示
-# =====================
 @users_bp.route('/<string:user_id>/edit', methods=['GET'])
 @role_required('admin')
 @login_required
 def edit(user_id):
+    """
+    ユーザー編集フォーム表示
+    """
     user = User.get_or_none(User.user_id == user_id)
     if not user:
         abort(404)
@@ -295,22 +262,18 @@ def edit(user_id):
 
     return render_template(
         "user/user_form.html",
-        active_template='dashboard/admin.html',
         user=user_data,
-        role='admin', 
         active_page='users',
-        user_role_name=current_app.config['ROLE_TITLES']['admin'],
         title='ユーザー新規登録',
-        current_date=datetime.datetime.now().strftime('%Y年%m月%d日')
     ) 
 
-# =====================
-# 更新処理
-# =====================
 @users_bp.route('/<string:user_id>/edit', methods=['POST'])
 @role_required('admin')
 @login_required
 def update(user_id):
+    """
+    ユーザー更新
+    """
     # ユーザー情報を取得
     data = request.json
     if not data:
@@ -336,13 +299,8 @@ def update(user_id):
     profile.name = data.get('name')
     profile.birth_date = data.get('birth_date')
     profile.gender = data.get('gender')
-    
-    # ユーザーロールに応じて department/department を設定
-    if user.role == "student":
-        profile.department = data.get('department')
-    else:
-        profile.department = data.get('department')
-    
+    profile.grade = data.get('grade')
+    profile.department = data.get('department')
     profile.save()
     
     # 更新パスワードを設定
@@ -355,14 +313,13 @@ def update(user_id):
            Password.create_password(user_id=user_id, raw_password=password, role=user.role)
     return jsonify({'message': 'ユーザー情報が更新されました'}), 200
   
-
-# =====================
-# 学生一覧（教師・管理者）
-# =====================
 @users_bp.route('/students', methods=['GET'])
 @role_required('teacher', 'admin')
 @login_required
 def list_students():
+    """
+    学生一覧（教師・管理者）
+    """
     users = User.select().where(User.role == 'student')
     students = Student.select().where(Student.student_id << [s.user_id for s in users])
     return jsonify([s.to_dict() for s in students])

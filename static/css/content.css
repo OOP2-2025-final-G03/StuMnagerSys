@@ -202,7 +202,7 @@ body {
     padding: 32px 40px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 16px;
     overflow-y: auto; /* コンテンツが溢れた場合のみスクロールバーを表示 */
     transition: margin-left var(--anim-slow);
     

@@ -1,4 +1,5 @@
-/* ページ全体のレイアウト（index.cssと同様に中央揃え） */
+/* ログイン画面 */
+/* ページ全体のレイアウト */
 body {
     display: flex;
     justify-content: center;

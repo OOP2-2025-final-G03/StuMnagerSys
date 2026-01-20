@@ -1,0 +1,41 @@
+{% for sub in subjects %}
+<tr>
+  <td style="font-family: monospace">{{ sub.id }}</td>
+  <td style="font-weight: 500; color: var(--text-main)">
+    {{ sub.name }}
+  </td>
+  <td>{{ sub.department }}</td>
+  <td>
+    <span
+      class="category {{ 'category-required' if sub.category == 'required' else 'category-elective' }}"
+      >{{ '必修' if sub.category == 'required' else '選択' }}</span
+    >
+  </td>
+  <td>{{ sub.grade }} 年</td>
+  <td><span class="credit-num">{{ sub.credits }}</span> 単位</td>
+  <td>{{ sub.day }} {{ sub.period }}限</td>
+
+  {% if user_role in ['admin', 'teacher'] %}
+  <td>
+    <div class="action-buttons">
+      <a
+        href="{{ url_for('subject.manage', subject_id=sub.id, role=user_role) }}"
+        class="action-link manage-link"
+        >履修管理</a
+      >
+      <a
+        href="{{ url_for('subject.edit', subject_id=sub.id, role=user_role) }}"
+        class="action-link edit-link"
+        >編集</a
+      >
+      <a
+        href="{{ url_for('subject.delete', subject_id=sub.id, role=user_role) }}"
+        class="action-link delete-link"
+        onclick="return confirm('本当に削除しますか？');"
+        >削除</a
+      >
+    </div>
+  </td>
+  {% endif %}
+</tr>
+{% endfor %}

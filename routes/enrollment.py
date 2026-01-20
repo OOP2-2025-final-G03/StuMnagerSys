@@ -1,33 +1,60 @@
 from flask import Blueprint, request, render_template, redirect, url_for, current_app
 from flask_login import login_required, current_user
+
 from models import Subject, Enrollment, Student
 from utils import role_required
-from datetime import datetime
 
-enrollment_bp = Blueprint('enrollment', __name__, url_prefix='/enrollment')
+enrollment_bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 
 @enrollment_bp.route('/')
 @role_required('admin', 'teacher', 'student')
 @login_required
 def index():
-    # 学生用のマイページ（履修一覧）機能のみ残す
     role = current_user.role
-    if role == 'student':
-        # 教師がアクセスした場合は科目一覧へ戻す
-        return redirect(url_for('subject.subject_list', role=role))
-
-    student_id = "K24000"
-    subjects = Subject.get_enrolled_subjects(student_id)
+    
+    # 修正ポイント: Subjectモデルのメソッドを呼ばず、Enrollmentと結合して直接取得する
+    # ログイン中の学生ID（student_id）に紐づく科目をクエリします
+    student_id = current_user.profile_dict().get('student_id')
+    
+    query = (Subject
+             .select()
+             .join(Enrollment, on=(Enrollment.subject_id == Subject.id))
+             .where(Enrollment.student_id == student_id))
+    
+    subjects = list(query)
+    
+    # 曜日と時限でソート
     day_order = {'月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6, '日': 7}
-    sorted_subjects = sorted(subjects, key=lambda x: (day_order.get(x['day'], 9), x['period']))
+    def sort_key(sub):
+        d = day_order.get(sub.day, 9)
+        try:
+            p = int(sub.period)
+        except (ValueError, TypeError):
+            p = 9
+        return (d, p)
+
+    sorted_subjects = sorted(subjects, key=sort_key)
+    
+    # --- ページネーション処理---
+    offset = int(request.args.get('offset', 0))
+    limit = 50
+    
+    paged_subjects = sorted_subjects[offset : offset + limit]
+    has_more = (offset + limit) < len(sorted_subjects)
+
+    # AJAXリクエスト（スクロール時）の場合
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'enrollment/enrollment_rows.html',
+            subjects=paged_subjects
+        )
 
     return render_template(
         'enrollment/enrollment_list.html', 
         subjects=sorted_subjects, 
         role=role,
-        active_template=f'dashboard/{role}.html',
-        active_page='enrollment',
-        current_date=datetime.now().strftime('%Y年%m月%d日')
+        active_page='enrollments', 
+        has_more=has_more
     )
 
 @enrollment_bp.route('/create', methods=['POST'])
@@ -107,4 +134,4 @@ def delete_bulk_by_id():
             .execute()
         )
     
-    return redirect(url_for('subject.manage', subject_id=subject_id, current_date=datetime.now().strftime('%Y年%m月%d日')))
+    return redirect(url_for('subject.manage', subject_id=subject_id))

@@ -1,0 +1,16 @@
+{% for sub in subjects %}
+<tr>
+  <td style="font-weight: 600; color: var(--primary-color)">
+    {{ sub.name }}
+  </td>
+  <td>
+    <span
+      class="category {{ 'category-required' if sub.category == 'required' else 'category-elective' }}"
+    >
+      {{ '必修' if sub.category == 'required' else '選択' }}
+    </span>
+  </td>
+  <td>{{ sub.credits }} 単位</td>
+  <td>{{ sub.day }}曜 {{ sub.period }}限</td>
+</tr>
+{% endfor %}

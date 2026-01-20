@@ -152,29 +152,30 @@
                     </form>
                 </div>
 
-                {% if not is_student_view %}
-                    <a href="{{ url_for('grade.create') }}" class="btn-add">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M12 5v14M5 12h14"></path>
-                        </svg>
-                        新規登録
-                    </a>
-                {% endif %}
-            </div>
+        <div class="table-responsive" id="scroll-container">
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        {% if not is_student_view %}
+                            <th width="140">学籍番号</th>
+                            <th width="160">氏名</th>
+                        {% endif %}
+                        <th>科目（科目ID）</th>
+                        <th width="80">単位</th>
+                        <th width="110">評価（0〜4）</th>
+                        <th width="110">評点</th>
+                        <th>状態</th>
+                        {% if not is_student_view %}
+                            <th width="160">操作</th>
+                        {% endif %}
+                    </tr>
+                </thead>
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div>
-                        {% for category, message in messages %}
-                            <p>{{ message }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-
-            <div class="table-responsive">
-                <table class="styled-table">
-                    <thead>
+                <tbody id="grade-table-body">
+                    {% set grade_items = items if items is defined else grades %}
+                    {% if grade_items and grade_items|length > 0 %}
+                        {% include 'grades/grade_rows.html' %}
+                    {% else %}
                         <tr>
                             {% if not is_student_view %}
                                 <th width="140">学籍番号</th>
@@ -260,4 +261,52 @@
         {% endif %}
 
     </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let offset = 50;
+let loading = false;
+let hasMore = {{ 'true' if has_more else 'false' }};
+
+// 検索パラメータの取得
+const filter = "{{ request.args.get('filter', 'all') }}";
+const subject = "{{ request.args.get('subject', '') }}";
+const studentNumber = "{{ request.args.get('student_number', '') }}";
+
+const container = document.getElementById('scroll-container');
+const tbody = document.getElementById('grade-table-body');
+
+container.addEventListener('scroll', async () => {
+    if (!hasMore || loading) return;
+
+    // 下部までスクロールしたか
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+        loading = true;
+
+        const params = new URLSearchParams({
+            filter: filter,
+            subject: subject,
+            student_number: studentNumber,
+            offset: offset
+        });
+
+        const res = await fetch(
+            `{{ url_for('grade.grade_list') }}?${params.toString()}`,
+            { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+        );
+
+        const html = await res.text();
+
+        if (!html.trim()) {
+            hasMore = false;
+            return;
+        }
+
+        tbody.insertAdjacentHTML('beforeend', html);
+        offset += 50;
+        loading = false;
+    }
+});
+</script>
 {% endblock %}

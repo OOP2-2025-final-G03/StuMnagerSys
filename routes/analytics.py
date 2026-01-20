@@ -1,104 +1,241 @@
+from flask import Blueprint, jsonify, request, render_template
+from flask_login import login_required, current_user
 from collections import defaultdict
+from peewee import OperationalError, fn
 
-from flask import Blueprint, jsonify, request
-from peewee import OperationalError
-
-from models import Grade
-
-# Subject が無い環境でも動かしたいので import は try
-try:
-    from models import Subject
-except Exception:
-    Subject = None
+from models import Grade, Subject, Student
+from utils import calculate_gpa, score_to_eval
 
 
-analytics_bp = Blueprint("analytics", __name__, url_prefix="/api/analytics")
-
-
-def score_to_eval(score: int) -> int:
-    """0-100(score) -> 評価(0-4)"""
-    if score <= 59:
-        return 0
-    if score <= 69:
-        return 1
-    if score <= 79:
-        return 2
-    if score <= 89:
-        return 3
-    return 4
-
+analytics_bp = Blueprint("analytic", __name__, url_prefix="/analytic")
 
 def _load_subject_name_map() -> dict[int, str]:
     """
     subject テーブルが存在する場合だけ {subject_id: subject_name} を返す。
     無い/壊れている場合は空dictを返す（= 科目名は '科目{ID}' にfallback）。
     """
-    if Subject is None:
-        return {}
-
     try:
-        # subject テーブルが無いとここで OperationalError
-        rows = Subject.select(Subject.subject_id, Subject.subject_name)
-        return {int(r.subject_id): str(r.subject_name) for r in rows}
-    except OperationalError:
+        rows = Subject.select(Subject.id, Subject.name)
+        return {int(r.id): str(r.name) for r in rows}
+    except (OperationalError, Exception):
         return {}
-    except Exception:
-        return {}
-
-
-@analytics_bp.get("/grades/chart")
-def grades_chart():
+    
+def _get_chart_all() -> dict:
     """
-    グラフ表示用データを返す:
-      - records: {student_number, subject_id, eval, unit_x_eval, unit, subject_name}
-      - by_student: 学生別の合計(unit_x_eval)
-      - by_subject: 科目別の合計(unit_x_eval)
+    全体の成績データを集計して返す。
+    
+    Returns:
+        dict: {
+            labels: GPA範囲のラベルリスト,
+            data: 各GPA範囲の学生数,
+            message: 分析メッセージ
+        }。
     """
-    student_number = (request.args.get("student_number") or "").strip()
 
-    q = Grade.select()
-    if student_number:
-        q = q.where(Grade.student_number == student_number)
+    # 全学生を取得
+    students = Student.select()
+    if not students:
+        return {"labels": [], "data": [], "message": "学生データがありません。"}
+    
+    # GPA範囲ごとの学生数を集計
+    gpa_buckets = {
+        "0.0~0.5": 0,
+        "0.5~1.0": 0,
+        "1.0~1.5": 0,
+        "1.5~2.0": 0,
+        "2.0~2.5": 0,
+        "2.5~3.0": 0,
+        "3.0~3.5": 0,
+        "3.5~4.0": 0
+    }
+    
+    total_gpa = 0.0
+    valid_student_count = 0
+    
+    # 各学生のGPAを計算して範囲に振り分け
+    for student in students:
+        gpa = calculate_gpa(student.student_id.user_id)
+        if gpa > 0:
+            total_gpa += gpa
+            valid_student_count += 1
+            
+            # GPA範囲の決定
+            if gpa < 0.5:
+                gpa_buckets["0.0~0.5"] += 1
+            elif gpa < 1.0:
+                gpa_buckets["0.5~1.0"] += 1
+            elif gpa < 1.5:
+                gpa_buckets["1.0~1.5"] += 1
+            elif gpa < 2.0:
+                gpa_buckets["1.5~2.0"] += 1
+            elif gpa < 2.5:
+                gpa_buckets["2.0~2.5"] += 1
+            elif gpa < 3.0:
+                gpa_buckets["2.5~3.0"] += 1
+            elif gpa < 3.5:
+                gpa_buckets["3.0~3.5"] += 1
+            else:
+                gpa_buckets["3.5~4.0"] += 1
+    
+    labels = list(gpa_buckets.keys())
+    scores = list(gpa_buckets.values())
+    
+    # 平均GPA
+    avg_gpa = round(total_gpa / valid_student_count, 2) if valid_student_count > 0 else 0.0
+    message = f"全体の平均GPA: {avg_gpa} | 集計対象学生: {valid_student_count}名"
+    
+    return {"labels": labels, "data": scores, "message": message}
 
-    subject_name_map = _load_subject_name_map()
-
-    records = []
-    sum_by_student = defaultdict(int)
-    sum_by_subject = defaultdict(int)
-
-    for g in q:
-        s_no = g.student_number
-        subj_id = int(g.subject_id)
-        unit = int(g.unit)
-        eval_ = score_to_eval(int(g.score))
-        unit_x_eval = unit * eval_
-
-        records.append(
-            {
-                "student_number": s_no,
-                "subject_id": subj_id,
-                "subject_name": subject_name_map.get(subj_id, f"科目{subj_id}"),
-                "unit": unit,
-                "eval": eval_,
-                "unit_x_eval": unit_x_eval,
-            }
-        )
-
-        sum_by_student[s_no] += unit_x_eval
-        sum_by_subject[subj_id] += unit_x_eval
-
-    # Chart.js 向け（labels/data）
-    student_labels = sorted(sum_by_student.keys())
-    student_data = [sum_by_student[k] for k in student_labels]
-
-    subject_labels = sorted(sum_by_subject.keys())
-    subject_data = [sum_by_subject[k] for k in subject_labels]
-    subject_name_labels = [subject_name_map.get(sid, f"科目{sid}") for sid in subject_labels]
-
-    return jsonify(
-        {
-            "records": records,
-            "by_student": {"labels": student_labels, "data": student_data},
-            "by_subject": {"labels": subject_labels, "label_names": subject_name_labels, "data": subject_data},
+    
+    
+def _get_chart_by_student() -> dict:
+    """
+    学生別の成績データを集計して返す。
+    Returns:
+        dict: {
+            labels: 科目名リスト,
+            data: 評点リスト,
+            message: 分析メッセージ
         }
+    """
+
+    # 学生ID取得（引数優先、なければリクエスト、なければログインユーザー）
+    student_id = request.args.get("student_id")
+    if not student_id:
+        student_id = getattr(current_user, "user_id", None)
+        if not student_id:
+            return {"labels": [], "data": [], "message": "学生IDが指定されていません。"}
+
+        grades = Grade.select().where(Grade.student_id == student_id)
+        if not grades:
+            return {"labels": [], "data": [], "message": "成績データがありません。"}
+
+        subject_map = _load_subject_name_map()
+        labels = []
+        scores = []
+        for g in grades:
+            labels.append(subject_map.get(g.subject_id, f"科目{g.subject_id}"))
+            scores.append(g.score)
+        # 学生は「あなた」固定
+        name = "あなた" if getattr(current_user, 'role', None) == 'student' else student_id
+        message = None
+        return {"labels": labels, "data": scores, "message": message}
+
+    # 成績データ取得
+    grades = Grade.select().where(Grade.student_id == student_id)
+    if not grades:
+        return {"labels": [], "data": [], "message": "成績データがありません。"}
+
+    # 科目名取得用マップ
+    subject_map = _load_subject_name_map()
+
+    labels = []
+    scores = []
+    for g in grades:
+        labels.append(subject_map.get(g.subject_id, f"科目{g.subject_id}"))
+        scores.append(g.score)
+
+    # print("labels:", labels)
+    # print("scores:", scores)
+
+    # print("student_id:", student_id)
+    grades = Grade.select().where(Grade.student_id == student_id)
+    # print("grades:", list(grades))
+
+    message = None
+    return {"labels": labels, "data": scores, "message": message}
+
+def _get_chart_by_subject() -> dict:
+    """
+    科目別の成績データを集計して返す。
+    Returns:
+        dict: {
+            "labels": 科目名リスト,
+            "data": 全科目の平均評点,
+            "message": メッセージ
+        }。
+    """
+    subject_map = _load_subject_name_map()
+    
+    # 教師権限等を想定し、科目ごとの全体平均を計算
+    query = (Grade
+             .select(Grade.subject_id, fn.AVG(Grade.score).alias('avg_score'))
+             .group_by(Grade.subject_id))
+    
+    avg_map = {subject_map.get(q.subject_id, f"科目{q.subject_id}"): round(float(q.avg_score), 1) for q in query}
+
+    message = "成績データがありません。"
+    if avg_map:
+        max_sub = max(avg_map, key=avg_map.get)
+        min_sub = min(avg_map, key=avg_map.get)
+        message = f"全体では{min_sub}が平均的に低く({avg_map[min_sub]}点)、{max_sub}が高い傾向にあります({avg_map[max_sub]}点)。"
+        message += f"   - 全体の平均点は{sum(avg_map.values()) / len(avg_map):.1f}点です。"
+
+    return {"labels": list(avg_map.keys()), 
+            "data": list(avg_map.values()), 
+            "message": message
+            }
+
+def _get_chart_by_predict() -> dict:
+    """
+    予測成績データを集計して返す。
+    Returns:
+        dict: {
+            学生ID,
+            平均GPA,
+            学生のGPA,
+            予測GPA,
+            メッセージ
+        }。
+    """
+    return {
+        
+    }
+
+
+@analytics_bp.get("/")
+@login_required
+def analytic():
+    """
+    分析データを返す。
+    学生リストも渡す。
+    """
+    # フィルターパラメータを取得（学生ログイン時は自動的に"student"としてフィルターを適用）
+    req_filter = request.args.get("filter", "all") if current_user.role != 'student' else request.args.get("filter", "student")
+    student_id = request.args.get("student_id")
+
+    # 学生リスト取得
+    students = [s.to_dict() for s in Student.select()]
+
+    if req_filter == "all":
+        data = _get_chart_all()
+    elif req_filter == "student":
+        data = _get_chart_by_student()
+    elif req_filter == "subject":
+        data = _get_chart_by_subject()
+    elif req_filter == "predict":
+        data = _get_chart_by_predict()
+    else:
+        data = {}
+
+    # 学生名をテンプレートに渡す（学生ログイン時は必ずセット）
+    student_name = ""
+    if hasattr(current_user, 'role') and current_user.role == 'student':
+        try:
+            stu = Student.get(Student.student_id == current_user.user_id)
+            student_name = stu.name if stu.name else "あなた"
+        except Exception:
+            student_name = "あなた"
+    elif isinstance(data, dict) and data.get("student_name"):
+        student_name = data["student_name"]
+
+    return render_template(
+        "analytic/analytic.html",
+        active_page='analytics',
+        req_filter=req_filter,
+        analysis_message=data.get("message"),
+        data=data,
+        students=students,
+        selected_student_id=student_id,
+        student_name=student_name
     )
