@@ -1,5 +1,6 @@
-from datetime import datetime
 import argparse
+
+from datetime import datetime
 from flask import Flask, render_template
 from flask_login import login_required, current_user
 
@@ -86,6 +87,7 @@ def parse_args():
     )
 
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     # データベースの初期化
