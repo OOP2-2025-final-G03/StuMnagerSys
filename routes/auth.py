@@ -56,33 +56,33 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+# 未実装 プロフィール機能
+# @auth_bp.route('/me')
+# @login_required
+# def profile():
+#     """
+#     ユーザープロフィールページ。
+#     """
 
-@auth_bp.route('/me')
-@login_required
-def profile():
-    """
-    ユーザープロフィールページ。
-    """
+#     # データ
+#     current_user_data = {
+#         'id': current_user.user_id,
+#         'name': current_user.profile_dict().get('name', 'ユーザー'),
+#         'role': current_user.role,
+#         'grade': current_user.profile_dict().get('grade', '未設定'),
+#         'last_login_ip': current_user.last_login_ip,
+#         'last_login_date': current_user.last_login,
+#         'birth_date': current_user.profile_dict().get('birth_date', '未設定'),
+#         'gender': current_user.profile_dict().get('gender', '未設定'),
+#         'department': current_user.profile_dict().get('department', '未設定'),
+#     }
 
-    # データ
-    current_user_data = {
-        'id': current_user.user_id,
-        'name': current_user.profile_dict().get('name', 'ユーザー'),
-        'role': current_user.role,
-        'grade': current_user.profile_dict().get('grade', '未設定'),
-        'last_login_ip': current_user.last_login_ip,
-        'last_login_date': current_user.last_login,
-        'birth_date': current_user.profile_dict().get('birth_date', '未設定'),
-        'gender': current_user.profile_dict().get('gender', '未設定'),
-        'department': current_user.profile_dict().get('department', '未設定'),
-    }
-
-    return render_template(
-        "user/profile.html",
-        active_page='profile',
-        user=current_user_data,
-        title='アカウント設定',
-    )
+#     return render_template(
+#         "user/profile.html",
+#         active_page='profile',
+#         user=current_user_data,
+#         title='アカウント設定',
+#     )
 
 # 未実装 設定機能
 # @auth_bp.route("/me/settings")

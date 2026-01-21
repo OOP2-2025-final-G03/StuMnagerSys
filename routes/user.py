@@ -117,38 +117,6 @@ def user_search():
         users=users,
     )
 
-@users_bp.route('/detail', methods=['GET'])
-@login_required
-def user_detail():
-    """
-    ユーザー詳細
-    """
-    user_id = request.args.get('user_id')
-    user = User.get_or_none(User.user_id == user_id)
-    if not user:
-        abort(400, description='user_id required')
-
-    if user.role == "student":
-        profile = Student.get_or_none(Student.student_id == user_id)
-    elif user.role == "teacher":
-        profile = Teacher.get_or_none(Teacher.teacher_id == user_id)
-    else:
-        abort(403)
-
-    if current_user.role != "admin" and current_user.user_id != user.user_id:
-        abort(403)
-        
-        user_data = {
-            "user_id": profile.student_id if user.role == "teacher" else profile.teacher_id,
-            "name": profile.name,
-            "role": user.role,
-            "department": profile.department if user.role == "teacher" else profile.department,
-            "gender": profile.gender,
-            "birth_date": profile.birth_date.strftime("%Y-%m-%d") if profile.birth_date else None,
-        }
-
-    return jsonify(user_data)
-
 @users_bp.route('/create', methods=['POST'])
 @role_required('admin')
 @login_required
