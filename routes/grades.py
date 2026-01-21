@@ -84,7 +84,7 @@ def grade_list():
             items=grade_items,
             subject_map=subject_map,
             student_name_map=student_name_map,
-            is_student_view=is_student_view
+            is_student_view=is_student_view,
         )
 
     # 生徒の「今後の頑張り」初期値
@@ -109,6 +109,7 @@ def grade_list():
         student_name_map=student_name_map,
         is_student_view=is_student_view,
         motivation_value=motivation_value,
+        has_more=has_more
     )
 
 
