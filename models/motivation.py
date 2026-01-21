@@ -14,7 +14,7 @@ class Motivation(Model):
         column_name='student_id'
     )
 
-    # やる気（0〜100）
+    # やる気（-100〜100）
     value = IntegerField(default=50)
 
     updated_at = DateTimeField(default=datetime.now)

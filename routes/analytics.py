@@ -161,7 +161,7 @@ def _get_chart_by_subject() -> dict:
 def _get_chart_by_predict() -> dict:
     """
     予測GPAを計算して「全体平均 / 現在のGPA / 予測」を返す。
-    予測GPA = 現在のGPA + (現在のGPA - (4 * (やる気値/100)))
+    予測GPA = 現在のGPA + (|全体平均GPA - 現在のGPA|) * (やる気値/100) + 全体平均GPA * (やる気値/100) * 0.3
     """
     # 対象学生ID（指定がなければログインユーザー）
     student_id = request.args.get("student_id")
@@ -204,7 +204,7 @@ def _get_chart_by_predict() -> dict:
         motivation = 50
 
     # 予測GPA（指定式）
-    predicted = current_gpa + (avg_gpa * (motivation / 100.0))
+    predicted = current_gpa + (abs(avg_gpa - current_gpa)) * (motivation / 100.0) + avg_gpa * (motivation / 100.0) * 0.3
     predicted = max(0.0, min(4.0, predicted))
 
     current_gpa_r = round(current_gpa, 2)

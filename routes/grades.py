@@ -141,7 +141,7 @@ def motivation():
     except Exception:
         return jsonify({"ok": False, "error": "value must be int"}), 400
 
-    value = max(0, min(100, value))
+    value = max(-100, min(100, value))
 
     m, created = Motivation.get_or_create(student_id=user, defaults={"value": value})
     if not created:
